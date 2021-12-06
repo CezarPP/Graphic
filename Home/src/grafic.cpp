@@ -1,7 +1,13 @@
 #include <bits/stdc++.h>
 #include <graphics.h>
 using namespace std;
-// g++ -o grafic grafic.cpp -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32
+// g++ -o gf grafic.cpp -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32
+
+const long double eps = 1e-10;
+const long double pi = acos(-1);
+const long double e = 2.718281;
+const long double inf = 1e12;
+
 inline void setBackground()
 {
     DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -138,8 +144,23 @@ struct myspace
 
 void draw_space(myspace space)
 {
-    setcolor(BLACK);
+    setcolor(WHITE);
     rectangle(space.centre.x - space.dim, space.centre.y - space.dim, space.centre.x + space.dim, space.centre.y + space.dim);
+
+    for (int i = 0; i <= space.dim; i += space.unit)
+    {
+        ///x=uri
+        line(space.centre.x - i, space.centre.y - space.dim, space.centre.x - i, space.centre.y - space.dim + 5);
+        line(space.centre.x + i, space.centre.y - space.dim, space.centre.x + i, space.centre.y - space.dim + 5);
+        line(space.centre.x - i, space.centre.y + space.dim, space.centre.x - i, space.centre.y + space.dim - 5);
+        line(space.centre.x + i, space.centre.y + space.dim, space.centre.x + i, space.centre.y + space.dim - 5);
+
+        ///y-uri
+        line(space.centre.x - space.dim, space.centre.y - i, space.centre.x - space.dim + 5, space.centre.y - i);
+        line(space.centre.x - space.dim, space.centre.y + i, space.centre.x - space.dim + 5, space.centre.y + i);
+        line(space.centre.x + space.dim, space.centre.y - i, space.centre.x + space.dim - 5, space.centre.y - i);
+        line(space.centre.x + space.dim, space.centre.y + i, space.centre.x + space.dim - 5, space.centre.y + i);
+    }
 
     setcolor(WHITE);
     line(space.centre.x - space.dim, space.centre.y, space.centre.x + space.dim, space.centre.y);
@@ -167,13 +188,53 @@ int normalizare(long double value)
     return space.centre.y + sign(value) * fabs(value) * space.unit;
 }
 
-int priority(int op)
+long double number(string s, int &i)
 {
+    long double number = 0;
+    while (i < (int)s.size() && '0' <= s[i] && s[i] <= '9')
+    {
+        number = number * 10 + s[i] - '0';
+        i++;
+    }
+    if (i < (int)s.size() && s[i] == '.')
+    {
+        long double p = 0.1;
+        i++;
+        while (i < (int)s.size() && '0' <= s[i] && s[i] <= '9')
+        {
+            number = number + p * (s[i] - '0');
+            i++;
+        }
+    }
+    i--;
+    return number;
+}
+
+int priority(char op)
+{
+    if (op < 0)
+        return 4;
+
+    if (op == '<' || op == '>' || op == '=')
+        return 0;
     if (op == '+' || op == '-')
         return 1;
     if (op == '*' || op == '/')
         return 2;
+    if (op == '^')
+        return 3;
+
     return -1;
+}
+
+long double egal(long double a, long double b)
+{
+    return fabs(a - b) <= eps;
+}
+
+bool este_functie_cu_un_parametru(char c)
+{
+    return c == 's' || c == 'c' || c == 't' || c == 'a' || c == 'l';
 }
 
 void process_op(stack<long double> &st, char op)
@@ -181,7 +242,22 @@ void process_op(stack<long double> &st, char op)
     long double r, l;
     r = st.top();
     st.pop();
-    if (op != 's' && op != 'c' && op != 't')
+
+    if (op < 0)
+    {
+        switch (-op)
+        {
+        case '+':
+            st.push(r);
+            break;
+        case '-':
+            st.push(-r);
+            break;
+        }
+        return;
+    }
+
+    if (!este_functie_cu_un_parametru(op))
     {
         l = st.top();
         st.pop();
@@ -201,6 +277,10 @@ void process_op(stack<long double> &st, char op)
     case '/':
         st.push(l / r);
         break;
+    case '^':
+        st.push(pow(l, r));
+        break;
+
     case 's':
         st.push(sin(r));
         break;
@@ -210,6 +290,22 @@ void process_op(stack<long double> &st, char op)
     case 't':
         st.push(tan(r));
         break;
+    case 'a':
+        st.push(fabs(r));
+        break;
+    case 'l':
+        st.push(log(r));
+        break; /// !!!!!!
+
+    case '<':
+        st.push((l < r));
+        break;
+    case '>':
+        st.push((l > r));
+        break;
+    case '=':
+        st.push(egal(l, r));
+        break;
     }
 }
 
@@ -217,26 +313,47 @@ long double evaluate(string &s, long double x)
 {
     stack<long double> st;
     stack<char> op;
+    bool poate_este_unar = 1;
+
     for (int i = 0; i < (int)s.size(); i++)
     {
+        /// doar spatiu
         if (s[i] == ' ')
             continue;
 
+        /// variabila
         if (s[i] == 'x')
         {
             st.push(x);
+            poate_este_unar = 0;
+            continue;
+        }
+        if (s[i] == 'e')
+        {
+            st.push(e);
+            poate_este_unar = 0;
+            continue;
+        }
+        if (s[i] == 'p')
+        {
+            st.push(pi);
+            poate_este_unar = 0;
+            i++;
             continue;
         }
 
-        if (s[i] == '(' || s[i] == 's' || s[i] == 'c' || s[i] == 't')
+        if (este_functie_cu_un_parametru(s[i]))
         {
             op.push(s[i]);
-            if (s[i] == 's')
-                i += 2;
-            else if (s[i] == 'c')
-                i += 2;
-            else if (s[i] == 't')
-                i++;
+            for (; s[i] != '('; i++)
+                ;
+            i--;
+        }
+
+        else if (s[i] == '(')
+        {
+            op.push('(');
+            poate_este_unar = 1;
         }
 
         else if (s[i] == ')')
@@ -246,9 +363,11 @@ long double evaluate(string &s, long double x)
                 process_op(st, op.top());
                 op.pop();
             }
-            op.pop();
 
-            if (!op.empty() && (op.top() == 's' || op.top() == 'c' || op.top() == 't'))
+            op.pop();
+            poate_este_unar = 0;
+
+            if (!op.empty() && este_functie_cu_un_parametru(op.top()))
             {
                 process_op(st, op.top());
                 op.pop();
@@ -257,34 +376,24 @@ long double evaluate(string &s, long double x)
 
         else if ('0' <= s[i] && s[i] <= '9')
         {
-            long double number = 0;
-            while (i < (int)s.size() && '0' <= s[i] && s[i] <= '9')
-            {
-                number = number * 10 + s[i] - '0';
-                i++;
-            }
-            if (i < (int)s.size() && s[i] == '.')
-            {
-                long double p = 0.1;
-                i++;
-                while (i < (int)s.size() && '0' <= s[i] && s[i] <= '9')
-                {
-                    number = number + p * (s[i] - '0');
-                    i++;
-                }
-            }
-            i--;
-            st.push(number);
+            st.push(number(s, i));
+            poate_este_unar = 0;
         }
 
         else
         {
-            while (!op.empty() && priority(op.top()) >= priority(s[i]))
+            char op_cur = s[i];
+
+            if (poate_este_unar && (op_cur == '+' || op_cur == '-'))
+                op_cur = -op_cur;
+
+            while (!op.empty() && ((s[i] != '^' && priority(op.top()) >= priority(op_cur)) || (priority(op.top()) > priority(s[i]))))
             {
                 process_op(st, op.top());
                 op.pop();
             }
-            op.push(s[i]);
+            op.push(op_cur);
+            poate_este_unar = 1;
         }
     }
 
@@ -295,16 +404,19 @@ long double evaluate(string &s, long double x)
     }
     return st.top();
 }
+
 void drawFunction(string s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
+
     space.unit = 30;
-    space.centre = {screenWidth/2, screenHeigth/2};
-    space.dim = max(screenWidth, screenWidth);
+    space.centre = {screenWidth / 2, screenHeigth / 2};
+    space.dim = screenHeigth / 2 - 100;
     space.pixel = (long double)1 / space.unit;
     space.maxy = (long double)space.dim / space.unit;
     initwindow(screenWidth, screenHeigth, "", -3, -3);
+
     for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
     {
         int y1 = normalizare(evaluate(s, pixelvalue(punct, space)));
