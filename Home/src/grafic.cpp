@@ -89,13 +89,10 @@ inline void functionInput()
             backSpace(crtX, crtY, equation);
         else
         {
-            cerr << equation.size();
-            cerr << equation;
             drawFunction(equation);
             break;
         };
     }
-    cout << equation;
     mainMenu();
 }
 inline void initialize()
@@ -103,7 +100,7 @@ inline void initialize()
     DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
     DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
     initwindow(screenWidth, screenHeigth, "", -3, -3);
-    //setwritemode(XOR_PUT); doesn't work with text
+    //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
 
 void mainMenu()
