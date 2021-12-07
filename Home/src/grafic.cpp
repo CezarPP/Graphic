@@ -14,25 +14,34 @@ inline void setBackground()
     DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
     readimagefile("ImageBackground.jpg", 0, 0, screenWidth, screenHeigth);
 }
+typedef void (*functionD)(int, int, int, int);
 class button
 {
 public:
     int x1, y1;
     int x2, y2;
     string txt;
-    button(int xA, int yA, int xB, int yB, const string &text)
+    functionD dF;
+    button(int xA, int yA, int xB, int yB, const string &text, void (*fct)(int, int, int, int))
     {
         txt = text;
         x1 = xA;
         x2 = xB;
         y1 = yA;
         y2 = yB;
+        dF = fct;
+    }
+    void draw()
+    {
+        setcolor(WHITE);
         setfillstyle(SLASH_FILL, YELLOW);
-        bar(x1, y1, x2, y2);
-
-        settextstyle(3, HORIZ_DIR, 3);
-        settextjustify(CENTER_TEXT, CENTER_TEXT);
-        outtextxy((x1 + x2) / 2, (y1 + y2) / 2, (char *)txt.c_str());
+        dF(x1, y1, x2, y2);
+        if (!txt.empty())
+        {
+            settextstyle(3, HORIZ_DIR, 3);
+            settextjustify(CENTER_TEXT, CENTER_TEXT);
+            outtextxy((x1 + x2) / 2, (y1 + y2) / 2, (char *)txt.c_str());
+        }
     }
     bool isPressed()
     {
@@ -113,9 +122,12 @@ void mainMenu()
 {
     cleardevice();
     setBackground();
-    button Start(200, 100, 400, 200, "Start");
-    button Languages(200, 200, 400, 300, "Limbi");
-    button Exit(200, 300, 400, 400, "Iesire");
+    button Start(200, 100, 400, 200, "Start", bar);
+    Start.draw();
+    button Languages(200, 200, 400, 300, "Limbi", bar);
+    Languages.draw();
+    button Exit(200, 300, 400, 400, "Iesire", bar);
+    Exit.draw();
     while (1)
     {
         if (Start.isPressed())
@@ -141,7 +153,17 @@ struct myspace
     long double pixel, maxx, maxy;
 
 } space;
-
+void drawPlus(int x1, int y1, int x2, int y2)
+{
+    int sz = max(y2 - y1, x2 - x1) / 5;
+    bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
+    bar((x2 + x1) / 2 - sz / 2, y1, (x2 + x1) / 2 + sz / 2, y2);
+}
+void drawMinus(int x1, int y1, int x2, int y2)
+{
+    int sz = max(y2 - y1, x2 - x1) / 5;
+    bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
+}
 void draw_space(myspace space)
 {
     setcolor(WHITE);
@@ -176,8 +198,7 @@ int sign(long double value)
 {
     if (value < 0)
         return 1;
-    else
-        return -1;
+    return -1;
 }
 
 int normalizare(long double value)
@@ -404,7 +425,19 @@ long double evaluate(string &s, long double x)
     }
     return st.top();
 }
+void reEvaluateFunction(string s, myspace space)
+{
+    cleardevice();
+    draw_space(space);
+    for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
+    {
+        int y1 = normalizare(evaluate(s, pixelvalue(punct, space)));
+        int y2 = normalizare(evaluate(s, pixelvalue(punct + 1, space)));
 
+        setcolor(RED);
+        line(punct, y1, punct + 1, y2);
+    }
+}
 void drawFunction(string s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -417,17 +450,44 @@ void drawFunction(string s)
     space.maxy = (long double)space.dim / space.unit;
     initwindow(screenWidth, screenHeigth, "", -3, -3);
 
-    for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
+    int spaceBorderX = space.centre.x + space.dim + 20;
+    int spaceBorderY = space.centre.y + space.dim - 100;
+
+    // draws plus and minus buttons
+    button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
+    button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
+    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100, "Exit", bar);
+
+    setcolor(BLUE);
+    reEvaluateFunction(s, space);
+    plusButton.draw();
+    minusButton.draw();
+    ExitFunction.draw();
+    while (1)
     {
-        int y1 = normalizare(evaluate(s, pixelvalue(punct, space)));
-        int y2 = normalizare(evaluate(s, pixelvalue(punct + 1, space)));
-
-        setcolor(RED);
-        line(punct, y1, punct + 1, y2);
+        if (ExitFunction.isPressed())
+            return;
+        else if (plusButton.isPressed())
+        {
+            space.unit += 20;
+            space.pixel = (long double)1 / space.unit;
+            space.maxy = (long double)space.dim / space.unit;
+            reEvaluateFunction(s, space);
+            plusButton.draw();
+            minusButton.draw();
+            ExitFunction.draw();
+        }
+        else if (minusButton.isPressed() && space.unit > 20)
+        {
+            space.unit -= 20;
+            space.pixel = (long double)1 / space.unit;
+            space.maxy = (long double)space.dim / space.unit;
+            reEvaluateFunction(s, space);
+            plusButton.draw();
+            minusButton.draw();
+            ExitFunction.draw();
+        }
     }
-
-    draw_space(space);
-    getch();
 }
 int main()
 {
