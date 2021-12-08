@@ -439,7 +439,6 @@ long double evaluate(string &s, long double x)
 void reEvaluateFunction(string s, myspace space)
 {
     cleardevice();
-    draw_space(space);
     for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
     {
         int y1 = normalizare(evaluate(s, pixelvalue(punct, space)));
@@ -448,6 +447,7 @@ void reEvaluateFunction(string s, myspace space)
         if (compareResults == crtCompareResults && !isnan(y1) && !isnan(y2) && isfinite(y1) && isfinite(y2))
             line(punct, y1, punct + 1, y2);
     }
+    draw_space(space);
 }
 void drawFunction(string s)
 {
