@@ -257,7 +257,10 @@ bool este_functie_cu_un_parametru(char c)
 {
     return c == 's' || c == 'c' || c == 't' || c == 'a' || c == 'l';
 }
-
+bitset<10> compareResults; // results of compare operations
+// this is useful in creating functions with {
+int k;
+bitset<10> crtCompareResults;
 void process_op(stack<long double> &st, char op)
 {
     long double r, l;
@@ -315,23 +318,31 @@ void process_op(stack<long double> &st, char op)
         st.push(fabs(r));
         break;
     case 'l':
-        st.push(log(r));
+        if (!isnan(log(r)))
+            st.push(log(r));
+        else
+            st.push(0);
         break; /// !!!!!!
 
     case '<':
         st.push((l < r));
+        crtCompareResults[k++] = (l < r);
         break;
     case '>':
         st.push((l > r));
+        crtCompareResults[k++] = (l > r);
         break;
     case '=':
         st.push(egal(l, r));
+        crtCompareResults[k++] = egal(l, r);
         break;
     }
 }
 
 long double evaluate(string &s, long double x)
 {
+    k = 0;
+    compareResults = crtCompareResults;
     stack<long double> st;
     stack<char> op;
     bool poate_este_unar = 1;
@@ -433,9 +444,9 @@ void reEvaluateFunction(string s, myspace space)
     {
         int y1 = normalizare(evaluate(s, pixelvalue(punct, space)));
         int y2 = normalizare(evaluate(s, pixelvalue(punct + 1, space)));
-
         setcolor(RED);
-        line(punct, y1, punct + 1, y2);
+        if (compareResults == crtCompareResults && !isnan(y1) && !isnan(y2) && isfinite(y1) && isfinite(y2))
+            line(punct, y1, punct + 1, y2);
     }
 }
 void drawFunction(string s)
