@@ -55,16 +55,23 @@ public:
     }
 };
 void mainMenu();
-bool isValid(char c)
+bool isValidCharacter(char c)
 {
-    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^')
+    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^'
+     || c == '(' || c == ')')
         return true;
     return false;
 }
 void updateText(int &x, int y, string &eq, char c)
 {
-    if (!isValid(c))
-        ; // inform them somehow
+    char txtForFunction[105];
+    DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
+    if (!isValidCharacter(c))
+    {
+        strcpy(txtForFunction, translationForLanguages["Invalid character"][currentLanguage].c_str());
+        outtextxy(screenWidth / 2 - 100, screenHeigth / 2 + 50, txtForFunction);
+    };
     eq += c;
     string aux(1, c);
     outtextxy(x, y, (char *)aux.c_str());
@@ -126,7 +133,7 @@ inline void functionInput()
             ;
 
         setfillstyle(SOLID_FILL, BLACK);
-        bar(screenWidth / 2 - 250, screenHeigth / 2 + 30, screenWidth / 2, screenHeigth / 2 + 50);
+        bar(screenWidth / 2 - 250, screenHeigth / 2 + 30, screenWidth / 2 + 50, screenHeigth / 2 + 55);
         char c = getch();
         if (c != 8 && c != 13)
             updateText(crtX, crtY, equation, c);
@@ -172,6 +179,10 @@ inline void initialize()
     translationForLanguages["Invalid function"].push_back("Functia este invalida");
     translationForLanguages["Invalid function"].push_back("The function is invalid");
     translationForLanguages["Invalid function"].push_back("La fonction n'est pas valide");
+
+    translationForLanguages["Invalid character"].push_back("Caracter invalid");
+    translationForLanguages["Invalid character"].push_back("Invalid character");
+    translationForLanguages["Invalid character"].push_back("Caractere non valide");
 
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
