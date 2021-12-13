@@ -6,7 +6,7 @@ using namespace std;
 const long double eps = 1e-10;
 const long double pi = acos(-1);
 const long double e = 2.718281;
-const long double inf = 1e12;
+const long double inf = 1e10;
 
 inline void setBackground()
 {
@@ -57,8 +57,7 @@ public:
 void mainMenu();
 bool isValidCharacter(char c)
 {
-    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^'
-     || c == '(' || c == ')')
+    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')')
         return true;
     return false;
 }
@@ -251,13 +250,15 @@ struct point
 {
     int x, y;
 };
+
 struct myspace
 {
     point centre;
     int dim, unit;
-    long double pixel, maxx, maxy;
-
+    int translation_x, translation_y;
+    long double pixel, maxy;
 } space;
+
 void drawPlus(int x1, int y1, int x2, int y2)
 {
     int sz = max(y2 - y1, x2 - x1) / 5;
@@ -272,31 +273,37 @@ void drawMinus(int x1, int y1, int x2, int y2)
 void draw_space(myspace space)
 {
     setcolor(WHITE);
+    setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     rectangle(space.centre.x - space.dim, space.centre.y - space.dim, space.centre.x + space.dim, space.centre.y + space.dim);
 
+    /// axele de coordonate
+    line(space.centre.x - space.dim, space.centre.y, space.centre.x + space.dim, space.centre.y);
+
+    if (abs(space.translation_x) < space.dim)
+        line(space.centre.x + space.translation_x, space.centre.y - space.dim, space.centre.x + space.translation_x, space.centre.y + space.dim);
+
+    setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
+
+    /// dracu stie cum o fac pe asta
     for (int i = 0; i <= space.dim; i += space.unit)
     {
-        ///x=uri
-        line(space.centre.x - i, space.centre.y - space.dim, space.centre.x - i, space.centre.y - space.dim + 5);
-        line(space.centre.x + i, space.centre.y - space.dim, space.centre.x + i, space.centre.y - space.dim + 5);
-        line(space.centre.x - i, space.centre.y + space.dim, space.centre.x - i, space.centre.y + space.dim - 5);
-        line(space.centre.x + i, space.centre.y + space.dim, space.centre.x + i, space.centre.y + space.dim - 5);
-
         ///y-uri
-        line(space.centre.x - space.dim, space.centre.y - i, space.centre.x - space.dim + 5, space.centre.y - i);
-        line(space.centre.x - space.dim, space.centre.y + i, space.centre.x - space.dim + 5, space.centre.y + i);
-        line(space.centre.x + space.dim, space.centre.y - i, space.centre.x + space.dim - 5, space.centre.y - i);
-        line(space.centre.x + space.dim, space.centre.y + i, space.centre.x + space.dim - 5, space.centre.y + i);
+        line(space.centre.x - space.dim, space.centre.y - i, space.centre.x - space.dim + 7, space.centre.y - i);
+        line(space.centre.x - space.dim, space.centre.y + i, space.centre.x - space.dim + 7, space.centre.y + i);
+        line(space.centre.x + space.dim, space.centre.y - i, space.centre.x + space.dim - 7, space.centre.y - i);
+        line(space.centre.x + space.dim, space.centre.y + i, space.centre.x + space.dim - 7, space.centre.y + i);
     }
-
-    setcolor(WHITE);
-    line(space.centre.x - space.dim, space.centre.y, space.centre.x + space.dim, space.centre.y);
-    line(space.centre.x, space.centre.y - space.dim, space.centre.x, space.centre.y + space.dim);
+    for (int i = space.centre.x - space.dim; i <= space.centre.x + space.dim; i++)
+        if (abs(i - space.centre.x - space.translation_x) % space.unit == 0)
+        {
+            line(i, space.centre.y - space.dim, i, space.centre.y - space.dim + 7);
+            line(i, space.centre.y + space.dim, i, space.centre.y + space.dim - 7);
+        }
 }
 
 long double pixelvalue(int x, myspace space)
 {
-    return (x - space.centre.x) * space.pixel;
+    return (x - space.centre.x - space.translation_x) * space.pixel;
 }
 
 int sign(long double value)
@@ -311,7 +318,7 @@ int normalizare(long double value)
     if (fabs(value) > space.maxy)
         return space.centre.y + sign(value) * space.dim;
 
-    return space.centre.y + sign(value) * fabs(value) * space.unit;
+    return space.centre.y + round(sign(value) * fabs(value) * space.unit);
 }
 
 long double number(string s, int &i)
@@ -353,15 +360,41 @@ int priority(char op)
     return -1;
 }
 
+long double produs(long double a, long double b)
+{
+    if (a == 0 || b == 0)
+        return 0;
+    else
+        return a * b;
+}
+
 long double egal(long double a, long double b)
 {
+    if (isnan(a) || isnan(b) || !isfinite(a) || !isfinite(b))
+        return log(-1);
+
     return fabs(a - b) <= eps;
 }
 
+long double mai_mic(long double a, long double b)
+{
+    if (isnan(a) || isnan(b) || !isfinite(a) || !isfinite(b))
+        return log(-1);
+    return a < b;
+}
+
+long double mai_mare(long double a, long double b)
+{
+    if (isnan(a) || isnan(b) || !isfinite(a) || !isfinite(b))
+        return log(-1);
+
+    return a > b;
+}
 bool este_functie_cu_un_parametru(char c)
 {
     return c == 's' || c == 'c' || c == 't' || c == 'a' || c == 'l';
 }
+
 bitset<10> compareResults; // results of compare operations
 // this is useful in creating functions with {
 int k;
@@ -401,7 +434,7 @@ void process_op(stack<long double> &st, char op)
         st.push(l - r);
         break;
     case '*':
-        st.push(l * r);
+        st.push(produs(l, r));
         break;
     case '/':
         st.push(l / r);
@@ -409,7 +442,6 @@ void process_op(stack<long double> &st, char op)
     case '^':
         st.push(pow(l, r));
         break;
-
     case 's':
         st.push(sin(r));
         break;
@@ -423,23 +455,29 @@ void process_op(stack<long double> &st, char op)
         st.push(fabs(r));
         break;
     case 'l':
-        if (!isnan(log(r)))
-            st.push(log(r));
-        else
-            st.push(0);
-        break; /// !!!!!!
+        st.push(log(r));
+        break;
 
     case '<':
-        st.push((l < r));
-        crtCompareResults[k++] = (l < r);
+        st.push(mai_mic(l, r));
+        crtCompareResults[k++] = (isnan(mai_mic(l, r)) || mai_mic(l, r));
         break;
     case '>':
-        st.push((l > r));
-        crtCompareResults[k++] = (l > r);
+        st.push(mai_mare(l, r));
+        crtCompareResults[k++] = (isnan(mai_mare(l, r)) || mai_mare(l, r));
         break;
+
     case '=':
         st.push(egal(l, r));
-        crtCompareResults[k++] = egal(l, r);
+        crtCompareResults[k++] = (isnan(egal(l, r)) || egal(l, r));
+        break;
+
+    case '#':
+        if (isnan(egal(l, r)))
+            st.push(log(-1));
+        else
+            st.push(!egal(l, r));
+        crtCompareResults[++k] = (isnan(egal(l, r)) || egal(l, r));
         break;
     }
 }
@@ -516,7 +554,6 @@ long double evaluate(string &s, long double x)
             st.push(number(s, i));
             poate_este_unar = 0;
         }
-
         else
         {
             char op_cur = s[i];
@@ -544,16 +581,26 @@ long double evaluate(string &s, long double x)
 void reEvaluateFunction(string s, myspace space)
 {
     cleardevice();
+    setcolor(RED);
+    setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
     {
-        int y1 = normalizare(evaluate(s, pixelvalue(punct, space)));
-        int y2 = normalizare(evaluate(s, pixelvalue(punct + 1, space)));
-        setcolor(RED);
-        if (compareResults == crtCompareResults && !isnan(y1) && !isnan(y2) && isfinite(y1) && isfinite(y2))
+        long double stvalue = evaluate(s, pixelvalue(punct, space));
+        long double drvalue = evaluate(s, pixelvalue(punct + 1, space));
+
+        if (isnan(stvalue) || isnan(drvalue) || fabs(stvalue) > inf || fabs(drvalue) > inf)
+            continue;
+
+        int y1 = normalizare(stvalue);
+        int y2 = normalizare(drvalue);
+
+        if (compareResults == crtCompareResults)
             line(punct, y1, punct + 1, y2);
     }
+    setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
     draw_space(space);
 }
+
 void drawFunction(string s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -572,37 +619,84 @@ void drawFunction(string s)
     // draws plus and minus buttons
     button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
     button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
-    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100,
-                        translationForLanguages["Exit"][currentLanguage], bar);
+    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100, "Exit", bar);
 
-    setcolor(BLUE);
+    button leftButton(spaceBorderX, spaceBorderY - 110, spaceBorderX + 100, spaceBorderY - 10, "left", bar);
+    button rightButton(spaceBorderX + 110, spaceBorderY - 110, spaceBorderX + 210, spaceBorderY - 10, "right", bar);
+    button recentreButton(spaceBorderX + 220, spaceBorderY - 110, spaceBorderX + 320, spaceBorderY - 10, "centre", bar);
+
     reEvaluateFunction(s, space);
     plusButton.draw();
     minusButton.draw();
     ExitFunction.draw();
+    leftButton.draw();
+    rightButton.draw();
+    recentreButton.draw();
+
     while (1)
     {
         if (ExitFunction.isPressed())
             return;
-        else if (plusButton.isPressed())
+
+        if (plusButton.isPressed() && space.translation_x == 0 && space.translation_y == 0)
         {
-            space.unit += 20;
+            space.unit += 10;
             space.pixel = (long double)1 / space.unit;
             space.maxy = (long double)space.dim / space.unit;
             reEvaluateFunction(s, space);
             plusButton.draw();
             minusButton.draw();
             ExitFunction.draw();
+            leftButton.draw();
+            rightButton.draw();
+            recentreButton.draw();
         }
-        else if (minusButton.isPressed() && space.unit > 20)
+
+        else if (minusButton.isPressed() && space.unit > 20 && space.translation_x == 0 && space.translation_y == 0)
         {
-            space.unit -= 20;
+            space.unit -= 10;
             space.pixel = (long double)1 / space.unit;
             space.maxy = (long double)space.dim / space.unit;
             reEvaluateFunction(s, space);
             plusButton.draw();
             minusButton.draw();
             ExitFunction.draw();
+            leftButton.draw();
+            rightButton.draw();
+            recentreButton.draw();
+        }
+        else if (leftButton.isPressed())
+        {
+            space.translation_x -= 10;
+            reEvaluateFunction(s, space);
+            plusButton.draw();
+            minusButton.draw();
+            ExitFunction.draw();
+            leftButton.draw();
+            rightButton.draw();
+            recentreButton.draw();
+        }
+        else if (rightButton.isPressed())
+        {
+            space.translation_x += 10;
+            reEvaluateFunction(s, space);
+            plusButton.draw();
+            minusButton.draw();
+            ExitFunction.draw();
+            leftButton.draw();
+            rightButton.draw();
+            recentreButton.draw();
+        }
+        else if (recentreButton.isPressed())
+        {
+            space.translation_x = 0;
+            reEvaluateFunction(s, space);
+            plusButton.draw();
+            minusButton.draw();
+            ExitFunction.draw();
+            leftButton.draw();
+            rightButton.draw();
+            recentreButton.draw();
         }
     }
 }
