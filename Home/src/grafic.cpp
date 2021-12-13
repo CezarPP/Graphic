@@ -80,23 +80,22 @@ void backSpace(int &x, int y, string &eq)
         outtextxy(x, y, (char *)aux.c_str());
     }
 }
-inline void setBlackboard()
-{
-    DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
-    DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
-    readimagefile("Blackboard.jpg", 0, 0, screenWidth, screenHeigth);
-}
 void drawFunction(string s);
 inline void functionInput()
 {
     cleardevice();
-    setBlackboard();
+    DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
+    readimagefile("Blackboard.jpg", 0, 0, screenWidth, screenHeigth);
     string equation;
     char txtForFunction[105];
     strcpy(txtForFunction, translationForLanguages["Write your function here"][currentLanguage].c_str());
-    outtextxy(400, 300, txtForFunction);
+    outtextxy(screenWidth/2 - 200, screenHeigth/2 - 200, txtForFunction);
 
-    int crtX = 425, crtY = 425;
+    int crtX = screenWidth/2 - 300, crtY = screenHeigth/2;
+    setfillstyle(SOLID_FILL, BLACK);
+    bar(screenWidth/2-350, screenHeigth/2-100, screenWidth/2+300, screenHeigth/2 + 100);
+    setfillstyle(SLASH_FILL, YELLOW);
     while (1)
     {
         while (!kbhit())
