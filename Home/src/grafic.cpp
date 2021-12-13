@@ -57,7 +57,7 @@ public:
 void mainMenu();
 bool isValidCharacter(char c)
 {
-    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')')
+    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')' || c == '<' || c == '>' || c == '=' || c == '#')
         return true;
     return false;
 }
@@ -159,17 +159,11 @@ inline void initialize()
     DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
     DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
     initwindow(screenWidth, screenHeigth, "", -3, -3);
-    translationForLanguages["Start"].push_back("Start");
-    translationForLanguages["Start"].push_back("Start");
-    translationForLanguages["Start"].push_back("Debut");
+    translationForLanguages["Start"] = {"Start", "Start", "Debut"};
 
-    translationForLanguages["Languages"].push_back("Limbi");
-    translationForLanguages["Languages"].push_back("Languages");
-    translationForLanguages["Languages"].push_back("Langues");
+    translationForLanguages["Languages"] = {"Limbi", "Languages", "Langues"};
 
-    translationForLanguages["Exit"].push_back("Iesire");
-    translationForLanguages["Exit"].push_back("Exit");
-    translationForLanguages["Exit"].push_back("Quitter");
+    translationForLanguages["Exit"] = {"Iesire", "Exit", "Quitter"};
 
     translationForLanguages["Write your function here"].push_back("Scrieti functia dumneavoastra aici");
     translationForLanguages["Write your function here"].push_back("Write your function here.");
@@ -179,10 +173,11 @@ inline void initialize()
     translationForLanguages["Invalid function"].push_back("The function is invalid");
     translationForLanguages["Invalid function"].push_back("La fonction n'est pas valide");
 
-    translationForLanguages["Invalid character"].push_back("Caracter invalid");
-    translationForLanguages["Invalid character"].push_back("Invalid character");
-    translationForLanguages["Invalid character"].push_back("Caractere non valide");
+    translationForLanguages["Invalid character"] = {"Caracter invalid", "Invalid character", "Caractere non valide"};
 
+    translationForLanguages["Left"] = {"Stanga", "Left", "Gauche"};
+    translationForLanguages["Right"] = {"Dreapta", "Right", "Droite"};
+    translationForLanguages["Center"] = {"Centru", "Center", "Centre"};
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
 void changeLanguage(string language)
@@ -208,7 +203,7 @@ void languagesMenu()
     button romanianButton(300, xButtons, 400, xButtons + 100, "Romanian", bar);
     button englishButton(500, xButtons, 600, xButtons + 100, "English", bar);
     button frenchButton(700, xButtons, 800, xButtons + 100, "Francais", bar);
-    button backButton(900, xButtons, 1000, xButtons + 100, "Exit", bar);
+    button backButton(900, xButtons, 1000, xButtons + 100, translationForLanguages["Exit"][currentLanguage], bar);
     romanianButton.draw();
     englishButton.draw();
     frenchButton.draw();
@@ -348,7 +343,7 @@ int priority(char op)
     if (op < 0)
         return 4;
 
-    if (op == '<' || op == '>' || op == '=')
+    if (op == '<' || op == '>' || op == '=' || op == '#')
         return 0;
     if (op == '+' || op == '-')
         return 1;
@@ -600,7 +595,11 @@ void reEvaluateFunction(string s, myspace space)
     setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
     draw_space(space);
 }
-
+inline void drawButtons(const vector<button> &v)
+{
+    for (auto it : v)
+        it.draw();
+}
 void drawFunction(string s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -619,23 +618,22 @@ void drawFunction(string s)
     // draws plus and minus buttons
     button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
     button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
-    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100, "Exit", bar);
+    button exitButton(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100,
+                      translationForLanguages["Exit"][currentLanguage], bar);
 
-    button leftButton(spaceBorderX, spaceBorderY - 110, spaceBorderX + 100, spaceBorderY - 10, "left", bar);
-    button rightButton(spaceBorderX + 110, spaceBorderY - 110, spaceBorderX + 210, spaceBorderY - 10, "right", bar);
-    button recentreButton(spaceBorderX + 220, spaceBorderY - 110, spaceBorderX + 320, spaceBorderY - 10, "centre", bar);
+    button leftButton(spaceBorderX, spaceBorderY - 110, spaceBorderX + 100, spaceBorderY - 10,
+                      translationForLanguages["Left"][currentLanguage], bar);
+    button rightButton(spaceBorderX + 110, spaceBorderY - 110, spaceBorderX + 210, spaceBorderY - 10,
+                       translationForLanguages["Right"][currentLanguage], bar);
+    button recentreButton(spaceBorderX + 220, spaceBorderY - 110, spaceBorderX + 320, spaceBorderY - 10,
+                          translationForLanguages["Center"][currentLanguage], bar);
 
     reEvaluateFunction(s, space);
-    plusButton.draw();
-    minusButton.draw();
-    ExitFunction.draw();
-    leftButton.draw();
-    rightButton.draw();
-    recentreButton.draw();
-
+    vector<button> functionButtons = {plusButton, minusButton, exitButton, leftButton, rightButton, recentreButton};
+    drawButtons(functionButtons);
     while (1)
     {
-        if (ExitFunction.isPressed())
+        if (exitButton.isPressed())
             return;
 
         if (plusButton.isPressed() && space.translation_x == 0 && space.translation_y == 0)
@@ -644,12 +642,7 @@ void drawFunction(string s)
             space.pixel = (long double)1 / space.unit;
             space.maxy = (long double)space.dim / space.unit;
             reEvaluateFunction(s, space);
-            plusButton.draw();
-            minusButton.draw();
-            ExitFunction.draw();
-            leftButton.draw();
-            rightButton.draw();
-            recentreButton.draw();
+            drawButtons(functionButtons);
         }
 
         else if (minusButton.isPressed() && space.unit > 20 && space.translation_x == 0 && space.translation_y == 0)
@@ -658,45 +651,25 @@ void drawFunction(string s)
             space.pixel = (long double)1 / space.unit;
             space.maxy = (long double)space.dim / space.unit;
             reEvaluateFunction(s, space);
-            plusButton.draw();
-            minusButton.draw();
-            ExitFunction.draw();
-            leftButton.draw();
-            rightButton.draw();
-            recentreButton.draw();
+            drawButtons(functionButtons);
         }
         else if (leftButton.isPressed())
         {
             space.translation_x -= 10;
             reEvaluateFunction(s, space);
-            plusButton.draw();
-            minusButton.draw();
-            ExitFunction.draw();
-            leftButton.draw();
-            rightButton.draw();
-            recentreButton.draw();
+            drawButtons(functionButtons);
         }
         else if (rightButton.isPressed())
         {
             space.translation_x += 10;
             reEvaluateFunction(s, space);
-            plusButton.draw();
-            minusButton.draw();
-            ExitFunction.draw();
-            leftButton.draw();
-            rightButton.draw();
-            recentreButton.draw();
+            drawButtons(functionButtons);
         }
         else if (recentreButton.isPressed())
         {
             space.translation_x = 0;
             reEvaluateFunction(s, space);
-            plusButton.draw();
-            minusButton.draw();
-            ExitFunction.draw();
-            leftButton.draw();
-            rightButton.draw();
-            recentreButton.draw();
+            drawButtons(functionButtons);
         }
     }
 }
