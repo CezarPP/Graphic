@@ -78,6 +78,9 @@ void backSpace(int &x, int y, string &eq)
         eq.pop_back();
         x -= 15;
         outtextxy(x, y, (char *)aux.c_str());
+        setfillstyle(SOLID_FILL, BLACK);
+        bar(x - 10, y - 15, x + 15, y);
+        setfillstyle(SLASH_FILL, YELLOW);
     }
 }
 void drawFunction(string s);
@@ -90,11 +93,11 @@ inline void functionInput()
     string equation;
     char txtForFunction[105];
     strcpy(txtForFunction, translationForLanguages["Write your function here"][currentLanguage].c_str());
-    outtextxy(screenWidth/2 - 200, screenHeigth/2 - 200, txtForFunction);
+    outtextxy(screenWidth / 2 - 200, screenHeigth / 2 - 200, txtForFunction);
 
-    int crtX = screenWidth/2 - 300, crtY = screenHeigth/2;
+    int crtX = screenWidth / 2 - 300, crtY = screenHeigth / 2;
     setfillstyle(SOLID_FILL, BLACK);
-    bar(screenWidth/2-350, screenHeigth/2-100, screenWidth/2+300, screenHeigth/2 + 100);
+    bar(screenWidth / 2 - 350, screenHeigth / 2 - 100, screenWidth / 2 + 300, screenHeigth / 2 + 100);
     setfillstyle(SLASH_FILL, YELLOW);
     while (1)
     {
@@ -522,8 +525,8 @@ void drawFunction(string s)
     // draws plus and minus buttons
     button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
     button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
-    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100, 
-    translationForLanguages["Exit"][currentLanguage], bar);
+    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100,
+                        translationForLanguages["Exit"][currentLanguage], bar);
 
     setcolor(BLUE);
     reEvaluateFunction(s, space);
