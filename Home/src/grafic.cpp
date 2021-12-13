@@ -79,11 +79,32 @@ void backSpace(int &x, int y, string &eq)
         x -= 15;
         outtextxy(x, y, (char *)aux.c_str());
         setfillstyle(SOLID_FILL, BLACK);
-        bar(x - 10, y - 15, x + 15, y);
+        bar(x - 10, y - 15, x + 15, y + 3);
         setfillstyle(SLASH_FILL, YELLOW);
     }
 }
 void drawFunction(string s);
+bool paranthesisAreCorrect(string s)
+{
+    int k = 0;
+    bool ok = true;
+    for (int i = 0; i < s.size() && ok; i++)
+    {
+        if (s[i] == '(')
+            k++;
+        else if (s[i] == ')')
+            k--;
+        if (k < 0)
+            ok = false;
+    }
+    if (ok && !k)
+        return true;
+    return false;
+}
+bool isValidFunction(string s)
+{
+    return paranthesisAreCorrect(s);
+}
 inline void functionInput()
 {
     cleardevice();
@@ -103,6 +124,9 @@ inline void functionInput()
     {
         while (!kbhit())
             ;
+
+        setfillstyle(SOLID_FILL, BLACK);
+        bar(screenWidth / 2 - 250, screenHeigth / 2 + 30, screenWidth / 2, screenHeigth / 2 + 50);
         char c = getch();
         if (c != 8 && c != 13)
             updateText(crtX, crtY, equation, c);
@@ -110,8 +134,16 @@ inline void functionInput()
             backSpace(crtX, crtY, equation);
         else
         {
-            drawFunction(equation);
-            break;
+            if (isValidFunction(equation))
+            {
+                drawFunction(equation);
+                break;
+            }
+            else
+            {
+                strcpy(txtForFunction, translationForLanguages["Invalid function"][currentLanguage].c_str());
+                outtextxy(screenWidth / 2 - 100, screenHeigth / 2 + 50, txtForFunction);
+            }
         };
     }
     mainMenu();
@@ -136,6 +168,10 @@ inline void initialize()
     translationForLanguages["Write your function here"].push_back("Scrieti functia dumneavoastra aici");
     translationForLanguages["Write your function here"].push_back("Write your function here.");
     translationForLanguages["Write your function here"].push_back("Ecrivez votre fonction ici.");
+
+    translationForLanguages["Invalid function"].push_back("Functia este invalida");
+    translationForLanguages["Invalid function"].push_back("The function is invalid");
+    translationForLanguages["Invalid function"].push_back("La fonction n'est pas valide");
 
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
