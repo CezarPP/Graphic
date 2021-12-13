@@ -14,6 +14,8 @@ inline void setBackground()
     DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
     readimagefile("ImageBackground.jpg", 0, 0, screenWidth, screenHeigth);
 }
+int currentLanguage = 0; // 0 for Romanian, 1 for English, 2 for French
+unordered_map<string, vector<string>> translationForLanguages;
 typedef void (*functionD)(int, int, int, int);
 class button
 {
@@ -90,7 +92,9 @@ inline void functionInput()
     cleardevice();
     setBlackboard();
     string equation;
-    outtextxy(400, 300, "Please write your equation here");
+    char txtForFunction[105];
+    strcpy(txtForFunction, translationForLanguages["Write your function here"][currentLanguage].c_str());
+    outtextxy(400, 300, txtForFunction);
 
     int crtX = 425, crtY = 425;
     while (1)
@@ -115,29 +119,81 @@ inline void initialize()
     DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
     DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
     initwindow(screenWidth, screenHeigth, "", -3, -3);
+    translationForLanguages["Start"].push_back("Start");
+    translationForLanguages["Start"].push_back("Start");
+    translationForLanguages["Start"].push_back("Debut");
+
+    translationForLanguages["Languages"].push_back("Limbi");
+    translationForLanguages["Languages"].push_back("Languages");
+    translationForLanguages["Languages"].push_back("Langues");
+
+    translationForLanguages["Exit"].push_back("Iesire");
+    translationForLanguages["Exit"].push_back("Exit");
+    translationForLanguages["Exit"].push_back("Quitter");
+
+    translationForLanguages["Write your function here"].push_back("Scrieti functia dumneavoastra aici");
+    translationForLanguages["Write your function here"].push_back("Write your function here.");
+    translationForLanguages["Write your function here"].push_back("Ecrivez votre fonction ici.");
+
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
+void changeLanguage(string language)
+{
+    if (language == "Romanian")
+        currentLanguage = 0;
+    else if (language == "English")
+        currentLanguage = 1;
+    else if (language == "French")
+        currentLanguage = 2;
+    else
+        throw(__throw_bad_function_call);
+}
+void languagesMenu()
+{
+    cleardevice();
 
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
+    readimagefile("ImageBackground.jpg", 0, 0, screenWidth, screenHeigth);
+
+    int xButtons = screenHeigth / 2;
+    button romanianButton(300, xButtons, 400, xButtons + 100, "Romanian", bar);
+    button englishButton(500, xButtons, 600, xButtons + 100, "English", bar);
+    button frenchButton(700, xButtons, 800, xButtons + 100, "Francais", bar);
+    button backButton(900, xButtons, 1000, xButtons + 100, "Exit", bar);
+    romanianButton.draw();
+    englishButton.draw();
+    frenchButton.draw();
+    backButton.draw();
+    while (1)
+    {
+        if (romanianButton.isPressed())
+            changeLanguage("Romanian");
+        else if (englishButton.isPressed())
+            changeLanguage("English");
+        else if (frenchButton.isPressed())
+            changeLanguage("French");
+        else if (backButton.isPressed())
+            break;
+    }
+    mainMenu();
+}
 void mainMenu()
 {
     cleardevice();
     setBackground();
-    button Start(200, 100, 400, 200, "Start", bar);
+    button Start(200, 100, 400, 200, translationForLanguages["Start"][currentLanguage], bar);
     Start.draw();
-    button Languages(200, 200, 400, 300, "Limbi", bar);
+    button Languages(200, 200, 400, 300, translationForLanguages["Languages"][currentLanguage], bar);
     Languages.draw();
-    button Exit(200, 300, 400, 400, "Iesire", bar);
+    button Exit(200, 300, 400, 400, translationForLanguages["Exit"][currentLanguage], bar);
     Exit.draw();
     while (1)
     {
         if (Start.isPressed())
-        {
             functionInput();
-        }
         else if (Languages.isPressed())
-        {
-            circle(400, 400, 13);
-        }
+            languagesMenu();
         else if (Exit.isPressed())
             exit(0);
     }
@@ -467,7 +523,8 @@ void drawFunction(string s)
     // draws plus and minus buttons
     button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
     button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
-    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100, "Exit", bar);
+    button ExitFunction(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100, 
+    translationForLanguages["Exit"][currentLanguage], bar);
 
     setcolor(BLUE);
     reEvaluateFunction(s, space);
