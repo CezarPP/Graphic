@@ -150,9 +150,33 @@ bool paranthesisAreCorrect(string s)
         return true;
     return false;
 }
-long double evaluate(string &s, long double x);
-bool isValidFunction(string s)
+long double evaluate(const string &s, long double x);
+bool isValidFunction(const string &s)
 {
+    for (int i = 0; i < s.size(); i++)
+    {
+        if (s[i] == 's')
+        {
+            if (i > s.size() - 3 || s[i + 1] != 'i' || s[i + 2] != 'n')
+                return false;
+        }
+        else if (s[i] == 'c')
+        {
+            if (i > s.size() - 3 || s[i + 1] != 'o' || s[i + 2] != 's')
+                return false;
+        }
+        else if (s[i] == 't')
+        {
+            // can be tan or tg
+            if ((i > s.size() - 3 || s[i + 1] != 'a' || s[i + 2] != 'n') && (i > s.size() - 2 || s[i + 1] != 'g'))
+                return false;
+        }
+        else if (s[i] == 'l')
+        {
+            if ((i > s.size() - 3 || s[i + 1] != 'o' || s[i + 2] != 'g') && (i > s.size() - 2 || (s[i + 1] != 'g' && s[i + 1] != 'n')))
+                return false;
+        }
+    }
     functionIsValidVar = true;
     evaluate(s, 1);
     return (functionIsValidVar && paranthesisAreCorrect(s));
@@ -172,7 +196,7 @@ inline void functionInput()
     setfillstyle(SOLID_FILL, BLACK);
     bar(screenWidth / 2 - 350, screenHeigth / 2 - 100, screenWidth / 2 + 300, screenHeigth / 2 + 100);
     setfillstyle(SLASH_FILL, YELLOW);
-    while (1)
+    while (true)
     {
         while (!kbhit())
             ;
@@ -226,7 +250,7 @@ inline void initialize()
     translationForLanguages["Center"] = {"Centru", "Center", "Centre"};
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
-void changeLanguage(string language)
+void changeLanguage(const string& language)
 {
     if (language == "Romanian")
         currentLanguage = 0;
@@ -254,7 +278,7 @@ void languagesMenu()
     englishButton.draw();
     frenchButton.draw();
     backButton.draw();
-    while (1)
+    while (true)
     {
         if (romanianButton.isPressed())
             changeLanguage("Romanian");
@@ -277,7 +301,7 @@ void mainMenu()
     Languages.draw();
     button Exit(200, 300, 400, 400, translationForLanguages["Exit"][currentLanguage], bar);
     Exit.draw();
-    while (1)
+    while (true)
     {
         if (Start.isPressed())
             functionInput();
@@ -523,7 +547,7 @@ void process_op(cleverStackLDouble &st, char op)
     }
 }
 
-long double evaluate(string &s, long double x)
+long double evaluate(const string &s, long double x)
 {
     k = 0;
     compareResults = crtCompareResults;
@@ -619,7 +643,7 @@ long double evaluate(string &s, long double x)
     }
     return st.top();
 }
-void reEvaluateFunction(string s, myspace space)
+void reEvaluateFunction(const string& s, myspace space)
 {
     cleardevice();
     setcolor(RED);
@@ -677,7 +701,7 @@ void drawFunction(string s)
     reEvaluateFunction(s, space);
     vector<button> functionButtons = {plusButton, minusButton, exitButton, leftButton, rightButton, recentreButton};
     drawButtons(functionButtons);
-    while (1)
+    while (true)
     {
         if (exitButton.isPressed())
             return;
