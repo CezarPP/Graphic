@@ -8,6 +8,7 @@ const long double pi = acos(-1);
 const long double e = 2.718281;
 const long double inf = 1e10;
 
+bool functionIsValidVar = true;
 inline void setBackground()
 {
     DWORD screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -52,6 +53,48 @@ public:
         if (x1 <= pos.x && pos.x <= x2 && y1 <= pos.y && pos.y <= y2 && GetAsyncKeyState(VK_LBUTTON))
             return true;
         return false;
+    }
+};
+class cleverStackChar : public stack<char>
+{
+public:
+    void pop()
+    {
+        if (!stack<char>::empty())
+            stack<char>::pop();
+        else
+            functionIsValidVar = false;
+    }
+    char top()
+    {
+        if (!stack<char>::empty())
+            return stack<char>::top();
+        else
+        {
+            functionIsValidVar = false;
+            return 0;
+        }
+    }
+};
+class cleverStackLDouble : public stack<long double>
+{
+public:
+    void pop()
+    {
+        if (!stack<long double>::empty())
+            stack<long double>::pop();
+        else
+            functionIsValidVar = false;
+    }
+    long double top()
+    {
+        if (!stack<long double>::empty())
+            return stack<long double>::top();
+        else
+        {
+            functionIsValidVar = false;
+            return 0;
+        }
     }
 };
 void mainMenu();
@@ -107,9 +150,12 @@ bool paranthesisAreCorrect(string s)
         return true;
     return false;
 }
+long double evaluate(string &s, long double x);
 bool isValidFunction(string s)
 {
-    return paranthesisAreCorrect(s);
+    functionIsValidVar = true;
+    evaluate(s, 1);
+    return (functionIsValidVar && paranthesisAreCorrect(s));
 }
 inline void functionInput()
 {
@@ -394,7 +440,7 @@ bitset<10> compareResults; // results of compare operations
 // this is useful in creating functions with {
 int k;
 bitset<10> crtCompareResults;
-void process_op(stack<long double> &st, char op)
+void process_op(cleverStackLDouble &st, char op)
 {
     long double r, l;
     r = st.top();
@@ -481,8 +527,8 @@ long double evaluate(string &s, long double x)
 {
     k = 0;
     compareResults = crtCompareResults;
-    stack<long double> st;
-    stack<char> op;
+    cleverStackLDouble st;
+    cleverStackChar op;
     bool poate_este_unar = 1;
 
     for (int i = 0; i < (int)s.size(); i++)
