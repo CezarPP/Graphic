@@ -124,7 +124,7 @@ void updateText(int &x, int y, string &eq, char c)
     {
         strcpy(txtForFunction, translationForLanguages["Invalid character"][currentLanguage].c_str());
         outtextxy(screenWidth / 2 - 100, screenHeigth / 2 + 50, txtForFunction);
-    };
+    }
     eq += c;
     string aux(1, c);
     outtextxy(x, y, (char *)aux.c_str());
@@ -143,8 +143,8 @@ void backSpace(int &x, int y, string &eq)
         setfillstyle(SLASH_FILL, YELLOW);
     }
 }
-void drawFunction(string s);
-bool paranthesisAreCorrect(string s)
+void drawFunction(const string& s);
+bool paranthesisAreCorrect(const string& s)
 {
     int k = 0;
     bool ok = true;
@@ -249,7 +249,7 @@ inline void functionInput()
                 strcpy(txtForFunction, translationForLanguages["Invalid function"][currentLanguage].c_str());
                 outtextxy(screenWidth / 2 - 100, screenHeigth / 2 + 50, txtForFunction);
             }
-        };
+        }
     }
     mainMenu();
 }
@@ -287,8 +287,6 @@ void changeLanguage(const string &language)
         currentLanguage = 1;
     else if (language == "French")
         currentLanguage = 2;
-    else
-        throw(__throw_bad_function_call);
 }
 void languagesMenu()
 {
@@ -680,7 +678,7 @@ void reEvaluateFunction(const string &s, myspace space)
     setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
     draw_space(space);
 }
-void drawFunction(string s)
+void drawFunction(const string& s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
