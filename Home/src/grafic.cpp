@@ -100,7 +100,13 @@ public:
 void mainMenu();
 bool isValidCharacter(char c)
 {
-    if (isalnum(c) || c == ' ' || c == '*' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')' || c == '<' || c == '>' || c == '=' || c == '#')
+    if (isalnum(c) || c == ' ' || c == '*' || c == '/' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')' || c == '<' || c == '>' || c == '=' || c == '#' || c == '.')
+        return true;
+    return false;
+}
+bool isOperator(char c)
+{
+    if (c == '*' || c == '/' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')' || c == '<' || c == '>' || c == '=' || c == '#' || c == '.')
         return true;
     return false;
 }
@@ -128,7 +134,7 @@ void backSpace(int &x, int y, string &eq)
         x -= 15;
         outtextxy(x, y, (char *)aux.c_str());
         setfillstyle(SOLID_FILL, BLACK);
-        bar(x - 10, y - 15, x + 15, y + 3);
+        bar(x - 10, y - 15, x + 15, y + 4);
         setfillstyle(SLASH_FILL, YELLOW);
     }
 }
@@ -181,18 +187,17 @@ bool isValidFunction(string s)
         }
         else if (s[i] == 'x')
         {
-            if (i < s.size() - 1 && s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != ')' && s[i + 1] != '/')
+            if (i < s.size() - 1 && (!isOperator(s[i+1]) || s[i+1] == '('))
                 return false;
         }
         else if (s[i] == ')')
         {
-            if (i < s.size() - 1 && s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != '/')
+            if (i < s.size() - 1 && (!isOperator(s[i+1]) || s[i+1] == '('))
                 return false;
         }
         else if ('0' <= s[i] && s[i] <= '9')
         {
-            if (i < s.size() - 1 && s[i + 1] > '9' && s[i + 1] < '0' &&
-                s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != '/' && s[i + 1] != ')')
+            if (i < s.size() - 1 && ((s[i + 1] > '9' || s[i + 1] < '0') && !isOperator(s[i+1]) || s[i+1] == '('))
                 return false;
         }
     }
