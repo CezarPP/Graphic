@@ -155,7 +155,7 @@ bool isValidFunction(const string &s)
 {
     for (int i = 0; i < s.size(); i++)
     {
-        if (s[i] == 's')
+        if (s[i] == 's' && (i > 1 && s[i-1] != 'o' && s[i-2] != 'c'))
         {
             if (i > s.size() - 3 || s[i + 1] != 'i' || s[i + 2] != 'n')
                 return false;
@@ -653,7 +653,14 @@ void reEvaluateFunction(const string& s, myspace space)
         long double stvalue = evaluate(s, pixelvalue(punct, space));
         long double drvalue = evaluate(s, pixelvalue(punct + 1, space));
 
-        if (isnan(stvalue) || isnan(drvalue) || fabs(stvalue) > inf || fabs(drvalue) > inf)
+        bool doNotPrint = false;
+        for(float stupid = 0.1; stupid <= 0.9 && !doNotPrint; stupid += 0.1) {
+            long double crtValue = evaluate(s, pixelvalue((float)punct + stupid, space));
+            if(isnan(crtValue) || fabs(crtValue) > space.dim)
+                doNotPrint = true;
+        }
+
+        if (doNotPrint || isnan(stvalue) || isnan(drvalue) || fabs(stvalue) > inf || fabs(drvalue) > inf)
             continue;
 
         int y1 = normalizare(stvalue);
