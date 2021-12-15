@@ -155,7 +155,7 @@ bool isValidFunction(const string &s)
 {
     for (int i = 0; i < s.size(); i++)
     {
-        if (s[i] == 's' && (i > 1 && s[i-1] != 'o' && s[i-2] != 'c'))
+        if (s[i] == 's' && (i > 1 && s[i - 1] != 'o' && s[i - 2] != 'c'))
         {
             if (i > s.size() - 3 || s[i + 1] != 'i' || s[i + 2] != 'n')
                 return false;
@@ -174,6 +174,11 @@ bool isValidFunction(const string &s)
         else if (s[i] == 'l')
         {
             if ((i > s.size() - 3 || s[i + 1] != 'o' || s[i + 2] != 'g') && (i > s.size() - 2 || (s[i + 1] != 'g' && s[i + 1] != 'n')))
+                return false;
+        }
+        else if (s[i] == 'x')
+        {
+            if (i < s.size() - 1 && s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != ')' && s[i + 1] != '/')
                 return false;
         }
     }
@@ -250,7 +255,7 @@ inline void initialize()
     translationForLanguages["Center"] = {"Centru", "Center", "Centre"};
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
-void changeLanguage(const string& language)
+void changeLanguage(const string &language)
 {
     if (language == "Romanian")
         currentLanguage = 0;
@@ -643,7 +648,7 @@ long double evaluate(const string &s, long double x)
     }
     return st.top();
 }
-void reEvaluateFunction(const string& s, myspace space)
+void reEvaluateFunction(const string &s, myspace space)
 {
     cleardevice();
     setcolor(RED);
@@ -654,9 +659,10 @@ void reEvaluateFunction(const string& s, myspace space)
         long double drvalue = evaluate(s, pixelvalue(punct + 1, space));
 
         bool doNotPrint = false;
-        for(float stupid = 0.1; stupid <= 0.9 && !doNotPrint; stupid += 0.1) {
+        for (float stupid = 0.1; stupid <= 0.9 && !doNotPrint; stupid += 0.1)
+        {
             long double crtValue = evaluate(s, pixelvalue((float)punct + stupid, space));
-            if(isnan(crtValue) || fabs(crtValue) > space.dim)
+            if (isnan(crtValue) || fabs(crtValue) > space.dim)
                 doNotPrint = true;
         }
 
