@@ -151,8 +151,11 @@ bool paranthesisAreCorrect(string s)
     return false;
 }
 long double evaluate(const string &s, long double x);
-bool isValidFunction(const string &s)
+bool isValidFunction(string s)
 {
+    string::iterator end_pos = remove(s.begin(), s.end(), ' ');
+    s.erase(end_pos, s.end());
+
     for (int i = 0; i < s.size(); i++)
     {
         if (s[i] == 's' && (i > 1 && s[i - 1] != 'o' && s[i - 2] != 'c'))
@@ -179,6 +182,17 @@ bool isValidFunction(const string &s)
         else if (s[i] == 'x')
         {
             if (i < s.size() - 1 && s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != ')' && s[i + 1] != '/')
+                return false;
+        }
+        else if (s[i] == ')')
+        {
+            if (i < s.size() - 1 && s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != '/')
+                return false;
+        }
+        else if ('0' <= s[i] && s[i] <= '9')
+        {
+            if (i < s.size() - 1 && s[i + 1] > '9' && s[i + 1] < '0' &&
+                s[i + 1] != '+' && s[i + 1] != '-' && s[i + 1] != '^' && s[i + 1] != '*' && s[i + 1] != '/' && s[i + 1] != ')')
                 return false;
         }
     }
