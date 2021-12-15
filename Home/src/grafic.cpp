@@ -55,6 +55,11 @@ public:
         return false;
     }
 };
+inline void drawButtons(const vector<button> &v)
+{
+    for (auto it : v)
+        it.draw();
+}
 class cleverStackChar : public stack<char>
 {
 public:
@@ -187,17 +192,17 @@ bool isValidFunction(string s)
         }
         else if (s[i] == 'x')
         {
-            if (i < s.size() - 1 && (!isOperator(s[i+1]) || s[i+1] == '('))
+            if (i < s.size() - 1 && (!isOperator(s[i + 1]) || s[i + 1] == '('))
                 return false;
         }
         else if (s[i] == ')')
         {
-            if (i < s.size() - 1 && (!isOperator(s[i+1]) || s[i+1] == '('))
+            if (i < s.size() - 1 && (!isOperator(s[i + 1]) || s[i + 1] == '('))
                 return false;
         }
         else if ('0' <= s[i] && s[i] <= '9')
         {
-            if (i < s.size() - 1 && ((s[i + 1] > '9' || s[i + 1] < '0') && !isOperator(s[i+1]) || s[i+1] == '('))
+            if (i < s.size() - 1 && ((s[i + 1] > '9' || s[i + 1] < '0') && !isOperator(s[i + 1]) || s[i + 1] == '('))
                 return false;
         }
     }
@@ -298,10 +303,8 @@ void languagesMenu()
     button englishButton(500, xButtons, 600, xButtons + 100, "English", bar);
     button frenchButton(700, xButtons, 800, xButtons + 100, "Francais", bar);
     button backButton(900, xButtons, 1000, xButtons + 100, translationForLanguages["Exit"][currentLanguage], bar);
-    romanianButton.draw();
-    englishButton.draw();
-    frenchButton.draw();
-    backButton.draw();
+    vector<button> functionButtons = {romanianButton, englishButton, frenchButton, backButton};
+    drawButtons(functionButtons);
     while (true)
     {
         if (romanianButton.isPressed())
@@ -348,17 +351,6 @@ struct myspace
     long double pixel, maxy;
 } space;
 
-void drawPlus(int x1, int y1, int x2, int y2)
-{
-    int sz = max(y2 - y1, x2 - x1) / 5;
-    bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
-    bar((x2 + x1) / 2 - sz / 2, y1, (x2 + x1) / 2 + sz / 2, y2);
-}
-void drawMinus(int x1, int y1, int x2, int y2)
-{
-    int sz = max(y2 - y1, x2 - x1) / 5;
-    bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
-}
 void draw_space(myspace space)
 {
     setcolor(WHITE);
@@ -373,7 +365,6 @@ void draw_space(myspace space)
 
     setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
 
-    /// dracu stie cum o fac pe asta
     for (int i = 0; i <= space.dim; i += space.unit)
     {
         ///y-uri
@@ -410,7 +401,7 @@ int normalizare(long double value)
     return space.centre.y + round(sign(value) * fabs(value) * space.unit);
 }
 
-long double number(string s, int &i)
+long double number(const string &s, int &i)
 {
     long double number = 0;
     while (i < (int)s.size() && '0' <= s[i] && s[i] <= '9')
@@ -677,15 +668,7 @@ void reEvaluateFunction(const string &s, myspace space)
         long double stvalue = evaluate(s, pixelvalue(punct, space));
         long double drvalue = evaluate(s, pixelvalue(punct + 1, space));
 
-        bool doNotPrint = false;
-        for (float stupid = 0.1; stupid <= 0.9 && !doNotPrint; stupid += 0.1)
-        {
-            long double crtValue = evaluate(s, pixelvalue((float)punct + stupid, space));
-            if (isnan(crtValue) || fabs(crtValue) > space.dim)
-                doNotPrint = true;
-        }
-
-        if (doNotPrint || isnan(stvalue) || isnan(drvalue) || fabs(stvalue) > inf || fabs(drvalue) > inf)
+        if (isnan(stvalue) || isnan(drvalue) || fabs(stvalue) > inf || fabs(drvalue) > inf)
             continue;
 
         int y1 = normalizare(stvalue);
@@ -696,11 +679,6 @@ void reEvaluateFunction(const string &s, myspace space)
     }
     setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
     draw_space(space);
-}
-inline void drawButtons(const vector<button> &v)
-{
-    for (auto it : v)
-        it.draw();
 }
 void drawFunction(string s)
 {
@@ -718,6 +696,17 @@ void drawFunction(string s)
     int spaceBorderY = space.centre.y + space.dim - 100;
 
     // draws plus and minus buttons
+    auto drawPlus = [](int x1, int y1, int x2, int y2)
+    {
+        int sz = max(y2 - y1, x2 - x1) / 5;
+        bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
+        bar((x2 + x1) / 2 - sz / 2, y1, (x2 + x1) / 2 + sz / 2, y2);
+    };
+    auto drawMinus = [](int x1, int y1, int x2, int y2)
+    {
+        int sz = max(y2 - y1, x2 - x1) / 5;
+        bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
+    };
     button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
     button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
     button exitButton(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100,
