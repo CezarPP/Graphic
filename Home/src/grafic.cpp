@@ -169,7 +169,7 @@ bool isValidFunction(string s)
 
     for (int i = 0; i < s.size(); i++)
     {
-        if (s[i] == 's' && (i > 1 && s[i - 1] != 'o' && s[i - 2] != 'c'))
+        if (s[i] == 's' && !(i > 1 && ((s[i - 1] == 'o' && s[i - 2] == 'c') || s[i - 1] == 'b' && s[i - 2] == 'a')))
         {
             if (i > s.size() - 3 || s[i + 1] != 'i' || s[i + 2] != 'n')
                 return false;
