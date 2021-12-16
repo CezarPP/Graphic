@@ -37,13 +37,17 @@ public:
     void draw()
     {
         setcolor(WHITE);
-        setfillstyle(SLASH_FILL, YELLOW);
+        setfillstyle(SOLID_FILL, YELLOW);
         dF(x1, y1, x2, y2);
         if (!txt.empty())
         {
             settextstyle(3, HORIZ_DIR, 3);
             settextjustify(CENTER_TEXT, CENTER_TEXT);
+            setbkcolor(YELLOW);
+            setcolor(BLACK);
             outtextxy((x1 + x2) / 2, (y1 + y2) / 2, (char *)txt.c_str());
+            setcolor(WHITE);
+            setbkcolor(BLACK);
         }
     }
     bool isPressed()
@@ -143,8 +147,8 @@ void backSpace(int &x, int y, string &eq)
         setfillstyle(SLASH_FILL, YELLOW);
     }
 }
-void drawFunction(const string& s);
-bool paranthesisAreCorrect(const string& s)
+void drawFunction(const string &s);
+bool paranthesisAreCorrect(const string &s)
 {
     int k = 0;
     bool ok = true;
@@ -678,7 +682,7 @@ void reEvaluateFunction(const string &s, myspace space)
     setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
     draw_space(space);
 }
-void drawFunction(const string& s)
+void drawFunction(const string &s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
