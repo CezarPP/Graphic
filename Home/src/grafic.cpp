@@ -280,6 +280,8 @@ inline void initialize()
 
     translationForLanguages["Left"] = {"Stanga", "Left", "Gauche"};
     translationForLanguages["Right"] = {"Dreapta", "Right", "Droite"};
+    translationForLanguages["Up"] = {"Sus", "Up", "Haut"};
+    translationForLanguages["Down"] = {"Jos", "Down", "Bas"};
     translationForLanguages["Center"] = {"Centru", "Center", "Centre"};
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
@@ -350,7 +352,7 @@ struct myspace
     point centre;
     int dim, unit;
     int translation_x, translation_y;
-    long double pixel, maxy;
+    long double pixel, maxy, miny;
 } space;
 
 void draw_space(myspace space)
@@ -359,27 +361,26 @@ void draw_space(myspace space)
     setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     rectangle(space.centre.x - space.dim, space.centre.y - space.dim, space.centre.x + space.dim, space.centre.y + space.dim);
 
-    /// axele de coordonate
-    line(space.centre.x - space.dim, space.centre.y, space.centre.x + space.dim, space.centre.y);
-
-    if (abs(space.translation_x) < space.dim)
+     if(abs(space.translation_x) < space.dim)
         line(space.centre.x + space.translation_x, space.centre.y - space.dim, space.centre.x + space.translation_x, space.centre.y + space.dim);
 
-    setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
+    if( abs(space.translation_y) < space.dim)
+        line(space.centre.x - space.dim, space.centre.y + space.translation_y, space.centre.x + space.dim, space.centre.y + space.translation_y);
 
-    for (int i = 0; i <= space.dim; i += space.unit)
-    {
-        ///y-uri
-        line(space.centre.x - space.dim, space.centre.y - i, space.centre.x - space.dim + 7, space.centre.y - i);
-        line(space.centre.x - space.dim, space.centre.y + i, space.centre.x - space.dim + 7, space.centre.y + i);
-        line(space.centre.x + space.dim, space.centre.y - i, space.centre.x + space.dim - 7, space.centre.y - i);
-        line(space.centre.x + space.dim, space.centre.y + i, space.centre.x + space.dim - 7, space.centre.y + i);
-    }
+    setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
+    ///x-uri
     for (int i = space.centre.x - space.dim; i <= space.centre.x + space.dim; i++)
         if (abs(i - space.centre.x - space.translation_x) % space.unit == 0)
         {
             line(i, space.centre.y - space.dim, i, space.centre.y - space.dim + 7);
             line(i, space.centre.y + space.dim, i, space.centre.y + space.dim - 7);
+        }
+    ///y-uri
+    for(int i = space.centre.y-space.dim; i <= space.centre.y + space.dim; i++)
+        if(abs(i - space.centre.y - space.translation_y) % space.unit == 0)
+        {
+            line(space.centre.x-space.dim, i, space.centre.x-space.dim+7, i);
+            line(space.centre.x+space.dim, i, space.centre.x+space.dim-7, i);
         }
 }
 
@@ -397,10 +398,13 @@ int sign(long double value)
 
 int normalizare(long double value)
 {
-    if (fabs(value) > space.maxy)
-        return space.centre.y + sign(value) * space.dim;
+    if (value > space.maxy)
+        return space.centre.y - space.dim;
 
-    return space.centre.y + round(sign(value) * fabs(value) * space.unit);
+    else if(value < space.miny)
+        return space.centre.y + space.dim;
+
+    return space.centre.y + space.dim - round(fabs(value-space.miny) * space.unit);
 }
 
 long double number(const string &s, int &i)
@@ -662,7 +666,9 @@ long double evaluate(const string &s, long double x)
 }
 void reEvaluateFunction(const string &s, myspace space)
 {
-    cleardevice();
+    setfillstyle(SOLID_FILL, BLACK);
+    bar(space.centre.x - space.dim-10, space.centre.y - space.dim-10, space.centre.x + space.dim+10, space.centre.y + space.dim+10);
+
     setcolor(RED);
     setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
@@ -692,6 +698,9 @@ void drawFunction(const string &s)
     space.dim = screenHeigth / 2 - 100;
     space.pixel = (long double)1 / space.unit;
     space.maxy = (long double)space.dim / space.unit;
+    space.miny = -space.maxy;
+    space.translation_x = 0;
+    space.translation_y = 0;
     initwindow(screenWidth, screenHeigth, "", -3, -3);
 
     int spaceBorderX = space.centre.x + space.dim + 20;
@@ -709,6 +718,7 @@ void drawFunction(const string &s)
         int sz = max(y2 - y1, x2 - x1) / 5;
         bar(x1, (y2 + y1) / 2 - sz / 2, x2, (y2 + y1) / 2 + sz / 2);
     };
+
     button plusButton(spaceBorderX, spaceBorderY, spaceBorderX + 50, spaceBorderY + 50, "", drawPlus);
     button minusButton(spaceBorderX + 100, spaceBorderY, spaceBorderX + 150, spaceBorderY + 50, "", drawMinus);
     button exitButton(spaceBorderX + 200, spaceBorderY, spaceBorderX + 300, spaceBorderY + 100,
@@ -718,12 +728,17 @@ void drawFunction(const string &s)
                       translationForLanguages["Left"][currentLanguage], bar);
     button rightButton(spaceBorderX + 110, spaceBorderY - 110, spaceBorderX + 210, spaceBorderY - 10,
                        translationForLanguages["Right"][currentLanguage], bar);
+    button upButton(spaceBorderX, spaceBorderY - 220, spaceBorderX + 100, spaceBorderY - 120 ,
+                        translationForLanguages["Up"][currentLanguage], bar);
+    button downButton(spaceBorderX+110, spaceBorderY-220, spaceBorderX+210, spaceBorderY-120,
+                      translationForLanguages["Down"][currentLanguage], bar);
     button recentreButton(spaceBorderX + 220, spaceBorderY - 110, spaceBorderX + 320, spaceBorderY - 10,
                           translationForLanguages["Center"][currentLanguage], bar);
 
     reEvaluateFunction(s, space);
-    vector<button> functionButtons = {plusButton, minusButton, exitButton, leftButton, rightButton, recentreButton};
+    vector<button> functionButtons = {plusButton, minusButton, exitButton, leftButton, rightButton, recentreButton, upButton, downButton};
     drawButtons(functionButtons);
+
     while (true)
     {
         if (exitButton.isPressed())
@@ -734,8 +749,8 @@ void drawFunction(const string &s)
             space.unit += 10;
             space.pixel = (long double)1 / space.unit;
             space.maxy = (long double)space.dim / space.unit;
+            space.miny = -space.maxy;
             reEvaluateFunction(s, space);
-            drawButtons(functionButtons);
         }
 
         else if (minusButton.isPressed() && space.unit > 20 && space.translation_x == 0 && space.translation_y == 0)
@@ -743,26 +758,41 @@ void drawFunction(const string &s)
             space.unit -= 10;
             space.pixel = (long double)1 / space.unit;
             space.maxy = (long double)space.dim / space.unit;
+            space.miny = -space.maxy;
             reEvaluateFunction(s, space);
-            drawButtons(functionButtons);
         }
+
         else if (leftButton.isPressed())
-        {
-            space.translation_x -= 10;
-            reEvaluateFunction(s, space);
-            drawButtons(functionButtons);
-        }
-        else if (rightButton.isPressed())
         {
             space.translation_x += 10;
             reEvaluateFunction(s, space);
-            drawButtons(functionButtons);
+        }
+        else if (rightButton.isPressed())
+        {
+            space.translation_x -= 10;
+            reEvaluateFunction(s, space);
+        }
+        else if (upButton.isPressed())
+        {
+            space.translation_y+=10;
+            space.maxy = space.maxy + 10*space.pixel;
+            space.miny = space.miny + 10*space.pixel;
+            reEvaluateFunction(s, space);
+        }
+        else if(downButton.isPressed())
+        {
+            space.translation_y-=10;
+            space.maxy = space.maxy - 10*space.pixel;
+            space.miny = space.miny - 10*space.pixel;
+            reEvaluateFunction(s, space);
         }
         else if (recentreButton.isPressed())
         {
             space.translation_x = 0;
+            space.translation_y = 0;
+            space.maxy = (long double)space.dim / space.unit;
+            space.miny = -space.maxy;
             reEvaluateFunction(s, space);
-            drawButtons(functionButtons);
         }
     }
 }
