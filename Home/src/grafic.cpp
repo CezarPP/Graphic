@@ -15,6 +15,21 @@ inline void setBackground()
     DWORD screenHeigth = GetSystemMetrics(SM_CYSCREEN);
     readimagefile("ImageBackground.jpg", 0, 0, screenWidth, screenHeigth);
 }
+struct point
+{
+    int x, y;
+};
+struct myspace
+{
+    point centre;
+    int dim, unit;
+    int translation_x, translation_y;
+    long double pixel, maxy, miny;
+} space;
+long double pixelvalue(int x, myspace space)
+{
+    return (x - space.centre.x - space.translation_x) * space.pixel;
+}
 int currentLanguage = 0; // 0 for Romanian, 1 for English, 2 for French
 unordered_map<string, vector<string>> translationForLanguages;
 typedef void (*functionD)(int, int, int, int);
@@ -209,10 +224,23 @@ bool isValidFunction(string s)
             if (i < s.size() - 1 && ((s[i + 1] > '9' || s[i + 1] < '0') && !isOperator(s[i + 1]) || s[i + 1] == '('))
                 return false;
         }
+        else if (s[i] == 'p')
+        {
+            if (i > s.size() - 2 || s[i + 1] != 'i')
+                return false;
+        }
+        else if (s[i] == 'e' || (i > 0 && s[i-1] == 'p' && s[i] == 'i'))
+        {
+            if (i < s.size() - 1 && (!isOperator(s[i + 1]) || s[i + 1] == '('))
+                return false;
+        }
     }
     functionIsValidVar = true;
+    bool correctParanthesis = paranthesisAreCorrect(s);
+    if (!correctParanthesis)
+        return false;
     evaluate(s, 1);
-    return (functionIsValidVar && paranthesisAreCorrect(s));
+    return functionIsValidVar;
 }
 inline void functionInput()
 {
@@ -283,6 +311,8 @@ inline void initialize()
     translationForLanguages["Up"] = {"Sus", "Up", "Haut"};
     translationForLanguages["Down"] = {"Jos", "Down", "Bas"};
     translationForLanguages["Center"] = {"Centru", "Center", "Centre"};
+
+    translationForLanguages["Integral"] = {"Integrala: ", "Integral: ", "Integrale: "};
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
 void changeLanguage(const string &language)
@@ -322,16 +352,52 @@ void languagesMenu()
     }
     mainMenu();
 }
+double simpsonIntegration(const string &s, double a, double b)
+{
+    const int N = 1000; // number of steps
+    double h = (b - a) / N;
+    double area = 0;
+    double value1 = evaluate(s, a), value2 = evaluate(s, b);
+    if (!isnan(value1) && isfinite(value1))
+        area += value1;
+    if (!isnan(value2) && isfinite(value2))
+        area += value2;
+    for (int i = 1; i <= N - 1; ++i)
+    { // Refer to final Simpson's formula
+        double x = a + h * i;
+        double value = evaluate(s, x);
+        if (!isnan(value) && isfinite(value))
+            area += evaluate(s, x) * ((i & 1) ? 4 : 2);
+    }
+    area *= h / 3;
+    if (abs(area) < eps)
+        area = 0;
+    return area;
+}
+
+void evaluateAndDrawIntegral(const string &s, myspace space)
+{
+    double area = simpsonIntegration(s, pixelvalue(space.centre.x - space.dim, space), pixelvalue(space.centre.x + space.dim, space));
+
+    int spaceBorderX = space.centre.x + space.dim + 200;
+    int spaceBorderY = space.centre.y + space.dim - 500;
+    string printIntegral = translationForLanguages["Integral"][currentLanguage] + to_string(area);
+    settextstyle(3, HORIZ_DIR, 3);
+    settextjustify(CENTER_TEXT, CENTER_TEXT);
+    setfillstyle(SOLID_FILL, BLACK);
+    bar(spaceBorderX - 100, spaceBorderY - 100, spaceBorderX + 200, spaceBorderY + 100);
+    setcolor(WHITE);
+    outtextxy(spaceBorderX, spaceBorderY, (char *)printIntegral.c_str());
+}
 void mainMenu()
 {
     cleardevice();
     setBackground();
     button Start(200, 100, 400, 200, translationForLanguages["Start"][currentLanguage], bar);
-    Start.draw();
     button Languages(200, 200, 400, 300, translationForLanguages["Languages"][currentLanguage], bar);
-    Languages.draw();
     button Exit(200, 300, 400, 400, translationForLanguages["Exit"][currentLanguage], bar);
-    Exit.draw();
+    vector<button> functionButtons = {Start, Languages, Exit};
+    drawButtons(functionButtons);
     while (true)
     {
         if (Start.isPressed())
@@ -342,28 +408,16 @@ void mainMenu()
             exit(0);
     }
 }
-struct point
-{
-    int x, y;
-};
-
-struct myspace
-{
-    point centre;
-    int dim, unit;
-    int translation_x, translation_y;
-    long double pixel, maxy, miny;
-} space;
 
 void draw_space(myspace space)
 {
     setcolor(WHITE);
     setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
 
-    if( abs(space.translation_y) < space.dim)
+    if (abs(space.translation_y) < space.dim)
         line(space.centre.x - space.dim, space.centre.y + space.translation_y, space.centre.x + space.dim, space.centre.y + space.translation_y);
 
-    if(abs(space.translation_x) < space.dim)
+    if (abs(space.translation_x) < space.dim)
         line(space.centre.x + space.translation_x, space.centre.y - space.dim, space.centre.x + space.translation_x, space.centre.y + space.dim);
 
     rectangle(space.centre.x - space.dim, space.centre.y - space.dim, space.centre.x + space.dim, space.centre.y + space.dim);
@@ -377,18 +431,12 @@ void draw_space(myspace space)
             line(i, space.centre.y + space.dim, i, space.centre.y + space.dim - 7);
         }
     ///y-uri
-    for(int i = space.centre.y-space.dim; i <= space.centre.y + space.dim; i++)
-        if(abs(i - space.centre.y - space.translation_y) % space.unit == 0)
+    for (int i = space.centre.y - space.dim; i <= space.centre.y + space.dim; i++)
+        if (abs(i - space.centre.y - space.translation_y) % space.unit == 0)
         {
-            line(space.centre.x-space.dim, i, space.centre.x-space.dim+7, i);
-            line(space.centre.x+space.dim, i, space.centre.x+space.dim-7, i);
+            line(space.centre.x - space.dim, i, space.centre.x - space.dim + 7, i);
+            line(space.centre.x + space.dim, i, space.centre.x + space.dim - 7, i);
         }
-
-}
-
-long double pixelvalue(int x, myspace space)
-{
-    return (x - space.centre.x - space.translation_x) * space.pixel;
 }
 
 int sign(long double value)
@@ -403,10 +451,10 @@ int normalizare(long double value)
     if (value > space.maxy)
         return space.centre.y - space.dim;
 
-    else if(value < space.miny)
+    else if (value < space.miny)
         return space.centre.y + space.dim;
 
-    return space.centre.y + space.dim - round(fabs(value-space.miny) * space.unit);
+    return space.centre.y + space.dim - round(fabs(value - space.miny) * space.unit);
 }
 
 long double number(const string &s, int &i)
@@ -670,16 +718,16 @@ long double evaluate(const string &s, long double x)
 void reset_graph()
 {
     setfillstyle(SOLID_FILL, BLACK);
-    bar(space.centre.x - space.dim-10, space.centre.y - space.dim-10, space.centre.x + space.dim+10, space.centre.y + space.dim+10);
+    bar(space.centre.x - space.dim - 10, space.centre.y - space.dim - 10, space.centre.x + space.dim + 10, space.centre.y + space.dim + 10);
 }
 
 void reEvaluateFunction(const string &s, myspace space, int intervala, int intervalb)
 {
+    evaluateAndDrawIntegral(s, space);
     setcolor(RED);
     setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     intervala = max(space.centre.x - space.dim, intervala);
     intervalb = min(space.centre.x + space.dim, intervalb);
-
     for (int punct = intervala; punct < intervalb; punct++)
     {
         long double stvalue = evaluate(s, pixelvalue(punct, space));
@@ -701,38 +749,37 @@ void sweepline(const string &s)
 {
     POINT prevmouse, curmouse;
     GetCursorPos(&prevmouse);
-    while(true)
+    while (true)
     {
         GetCursorPos(&curmouse);
         delay(100);
 
-        if(curmouse.x != prevmouse.x)
+        if (curmouse.x != prevmouse.x)
         {
             setfillstyle(SOLID_FILL, BLACK);
-            bar(prevmouse.x-7, space.centre.y - space.dim, prevmouse.x+7, space.centre.y + space.dim);
+            bar(prevmouse.x - 7, space.centre.y - space.dim, prevmouse.x + 7, space.centre.y + space.dim);
 
-            reEvaluateFunction(s, space, prevmouse.x-10, prevmouse.x+10);
+            reEvaluateFunction(s, space, prevmouse.x - 10, prevmouse.x + 10);
 
-            prevmouse=curmouse;
-            if(!(space.centre.x-space.dim < prevmouse.x && space.centre.x+space.dim > prevmouse.x &&
-                    space.centre.y-space.dim < prevmouse.y && space.centre.y+space.dim > prevmouse.y))
+            prevmouse = curmouse;
+            if (!(space.centre.x - space.dim < prevmouse.x && space.centre.x + space.dim > prevmouse.x &&
+                  space.centre.y - space.dim < prevmouse.y && space.centre.y + space.dim > prevmouse.y))
                 return;
 
             setcolor(GREEN);
             setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
-            line(prevmouse.x, space.centre.y-space.dim, prevmouse.x, space.centre.y+space.dim);
-             line(prevmouse.x+1, space.centre.y-space.dim, prevmouse.x+1, space.centre.y+space.dim);
+            line(prevmouse.x, space.centre.y - space.dim, prevmouse.x, space.centre.y + space.dim);
+            line(prevmouse.x + 1, space.centre.y - space.dim, prevmouse.x + 1, space.centre.y + space.dim);
 
             long double pointvalue = evaluate(s, pixelvalue(prevmouse.x, space));
 
-            if (isnan(pointvalue) || isnan(pointvalue) || fabs(pointvalue) > inf || fabs(pointvalue) > inf
-                || pointvalue < space.miny || pointvalue > space.maxy)
-                    cout << pixelvalue(prevmouse.x, space) << ' ' << "NAN" << '\n';
+            if (isnan(pointvalue) || isnan(pointvalue) || fabs(pointvalue) > inf || fabs(pointvalue) > inf || pointvalue < space.miny || pointvalue > space.maxy)
+                cout << pixelvalue(prevmouse.x, space) << ' ' << "NAN" << '\n';
             else
             {
                 cout << pixelvalue(prevmouse.x, space) << ' ' << pointvalue << '\n';
                 int centre = normalizare(pointvalue);
-                for(int i=1;i<=5;i++)
+                for (int i = 1; i <= 5; i++)
                     circle(prevmouse.x, centre, i);
             }
         }
@@ -781,7 +828,7 @@ void drawFunction(const string &s)
                        translationForLanguages["Right"][currentLanguage], bar);
     button upButton(spaceBorderX, spaceBorderY - 220, spaceBorderX + 100, spaceBorderY - 120,
                     translationForLanguages["Up"][currentLanguage], bar);
-    button downButton(spaceBorderX+110, spaceBorderY-220, spaceBorderX+210, spaceBorderY-120,
+    button downButton(spaceBorderX + 110, spaceBorderY - 220, spaceBorderX + 210, spaceBorderY - 120,
                       translationForLanguages["Down"][currentLanguage], bar);
     button recentreButton(spaceBorderX + 220, spaceBorderY - 110, spaceBorderX + 320, spaceBorderY - 10,
                           translationForLanguages["Center"][currentLanguage], bar);
@@ -796,13 +843,11 @@ void drawFunction(const string &s)
         if (exitButton.isPressed())
             return;
 
-
         POINT mouse;
         GetCursorPos(&mouse);
-        if(space.centre.x-space.dim < mouse.x && space.centre.x+space.dim > mouse.x &&
-                space.centre.y-space.dim < mouse.y && space.centre.y+space.dim > mouse.y)
+        if (space.centre.x - space.dim < mouse.x && space.centre.x + space.dim > mouse.x &&
+            space.centre.y - space.dim < mouse.y && space.centre.y + space.dim > mouse.y)
             sweepline(s);
-
 
         else if (plusButton.isPressed() && space.translation_x == 0 && space.translation_y == 0)
         {
@@ -838,17 +883,17 @@ void drawFunction(const string &s)
         }
         else if (upButton.isPressed())
         {
-            space.translation_y+=10;
-            space.maxy = space.maxy + 10*space.pixel;
-            space.miny = space.miny + 10*space.pixel;
+            space.translation_y += 10;
+            space.maxy = space.maxy + 10 * space.pixel;
+            space.miny = space.miny + 10 * space.pixel;
             reset_graph();
             reEvaluateFunction(s, space, space.centre.x - space.dim, space.centre.x + space.dim);
         }
-        else if(downButton.isPressed())
+        else if (downButton.isPressed())
         {
-            space.translation_y-=10;
-            space.maxy = space.maxy - 10*space.pixel;
-            space.miny = space.miny - 10*space.pixel;
+            space.translation_y -= 10;
+            space.maxy = space.maxy - 10 * space.pixel;
+            space.miny = space.miny - 10 * space.pixel;
             reset_graph();
             reEvaluateFunction(s, space, space.centre.x - space.dim, space.centre.x + space.dim);
         }
