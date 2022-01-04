@@ -211,8 +211,11 @@ bool isValidFunction(string s)
         }
     }
     functionIsValidVar = true;
+    bool correctParanthesis = paranthesisAreCorrect(s);
+    if (!correctParanthesis)
+        return false;
     evaluate(s, 1);
-    return (functionIsValidVar && paranthesisAreCorrect(s));
+    return functionIsValidVar;
 }
 inline void functionInput()
 {
@@ -283,6 +286,8 @@ inline void initialize()
     translationForLanguages["Up"] = {"Sus", "Up", "Haut"};
     translationForLanguages["Down"] = {"Jos", "Down", "Bas"};
     translationForLanguages["Center"] = {"Centru", "Center", "Centre"};
+
+    translationForLanguages["Integral"] = {"Integrala: ", "Integral: ", "Integrale: "};
     //setwritemode(XOR_PUT); doesn't work with text so, no use here
 }
 void changeLanguage(const string &language)
@@ -361,10 +366,10 @@ void draw_space(myspace space)
     setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     rectangle(space.centre.x - space.dim, space.centre.y - space.dim, space.centre.x + space.dim, space.centre.y + space.dim);
 
-     if(abs(space.translation_x) < space.dim)
+    if (abs(space.translation_x) < space.dim)
         line(space.centre.x + space.translation_x, space.centre.y - space.dim, space.centre.x + space.translation_x, space.centre.y + space.dim);
 
-    if( abs(space.translation_y) < space.dim)
+    if (abs(space.translation_y) < space.dim)
         line(space.centre.x - space.dim, space.centre.y + space.translation_y, space.centre.x + space.dim, space.centre.y + space.translation_y);
 
     setlinestyle(SOLID_LINE, 0, NORM_WIDTH);
@@ -376,11 +381,11 @@ void draw_space(myspace space)
             line(i, space.centre.y + space.dim, i, space.centre.y + space.dim - 7);
         }
     ///y-uri
-    for(int i = space.centre.y-space.dim; i <= space.centre.y + space.dim; i++)
-        if(abs(i - space.centre.y - space.translation_y) % space.unit == 0)
+    for (int i = space.centre.y - space.dim; i <= space.centre.y + space.dim; i++)
+        if (abs(i - space.centre.y - space.translation_y) % space.unit == 0)
         {
-            line(space.centre.x-space.dim, i, space.centre.x-space.dim+7, i);
-            line(space.centre.x+space.dim, i, space.centre.x+space.dim-7, i);
+            line(space.centre.x - space.dim, i, space.centre.x - space.dim + 7, i);
+            line(space.centre.x + space.dim, i, space.centre.x + space.dim - 7, i);
         }
 }
 
@@ -401,10 +406,10 @@ int normalizare(long double value)
     if (value > space.maxy)
         return space.centre.y - space.dim;
 
-    else if(value < space.miny)
+    else if (value < space.miny)
         return space.centre.y + space.dim;
 
-    return space.centre.y + space.dim - round(fabs(value-space.miny) * space.unit);
+    return space.centre.y + space.dim - round(fabs(value - space.miny) * space.unit);
 }
 
 long double number(const string &s, int &i)
@@ -664,11 +669,44 @@ long double evaluate(const string &s, long double x)
     }
     return st.top();
 }
+
+double simpsonIntegration(const string &s, double a, double b)
+{
+    const int N = 1000; // number of steps
+    double h = (b - a) / N;
+    double area = 0;
+    double value1 = evaluate(s, a), value2 = evaluate(s, b);
+    if (!isnan(value1) && isfinite(value1))
+        area += value1;
+    if (!isnan(value2) && isfinite(value2))
+        area += value2;
+    for (int i = 1; i <= N - 1; ++i)
+    { // Refer to final Simpson's formula
+        double x = a + h * i;
+        double value = evaluate(s, x);
+        if (!isnan(value) && isfinite(value))
+            area += evaluate(s, x) * ((i & 1) ? 4 : 2);
+    }
+    area *= h / 3;
+    return area;
+}
+
+void evaluateAndDrawIntegral(const string &s, myspace space)
+{
+    double area = simpsonIntegration(s, pixelvalue(space.centre.x - space.dim, space), pixelvalue(space.centre.x + space.dim, space));
+
+    int spaceBorderX =  space.centre.x + space.dim + 200;
+    int spaceBorderY = space.centre.y + space.dim - 500;
+    string printIntegral = translationForLanguages["Integral"][currentLanguage] + to_string(area);
+    settextstyle(3, HORIZ_DIR, 3);
+    settextjustify(CENTER_TEXT, CENTER_TEXT);
+    outtextxy(spaceBorderX, spaceBorderY, (char *)printIntegral.c_str());
+}
 void reEvaluateFunction(const string &s, myspace space)
 {
     setfillstyle(SOLID_FILL, BLACK);
-    bar(space.centre.x - space.dim-10, space.centre.y - space.dim-10, space.centre.x + space.dim+10, space.centre.y + space.dim+10);
-
+    bar(space.centre.x - space.dim - 10, space.centre.y - space.dim - 10, space.centre.x + space.dim + 10, space.centre.y + space.dim + 10);
+    evaluateAndDrawIntegral(s, space);
     setcolor(RED);
     setlinestyle(SOLID_LINE, 0, THICK_WIDTH);
     for (int punct = space.centre.x - space.dim; punct < space.centre.x + space.dim; punct++)
@@ -728,9 +766,9 @@ void drawFunction(const string &s)
                       translationForLanguages["Left"][currentLanguage], bar);
     button rightButton(spaceBorderX + 110, spaceBorderY - 110, spaceBorderX + 210, spaceBorderY - 10,
                        translationForLanguages["Right"][currentLanguage], bar);
-    button upButton(spaceBorderX, spaceBorderY - 220, spaceBorderX + 100, spaceBorderY - 120 ,
-                        translationForLanguages["Up"][currentLanguage], bar);
-    button downButton(spaceBorderX+110, spaceBorderY-220, spaceBorderX+210, spaceBorderY-120,
+    button upButton(spaceBorderX, spaceBorderY - 220, spaceBorderX + 100, spaceBorderY - 120,
+                    translationForLanguages["Up"][currentLanguage], bar);
+    button downButton(spaceBorderX + 110, spaceBorderY - 220, spaceBorderX + 210, spaceBorderY - 120,
                       translationForLanguages["Down"][currentLanguage], bar);
     button recentreButton(spaceBorderX + 220, spaceBorderY - 110, spaceBorderX + 320, spaceBorderY - 10,
                           translationForLanguages["Center"][currentLanguage], bar);
@@ -774,16 +812,16 @@ void drawFunction(const string &s)
         }
         else if (upButton.isPressed())
         {
-            space.translation_y+=10;
-            space.maxy = space.maxy + 10*space.pixel;
-            space.miny = space.miny + 10*space.pixel;
+            space.translation_y += 10;
+            space.maxy = space.maxy + 10 * space.pixel;
+            space.miny = space.miny + 10 * space.pixel;
             reEvaluateFunction(s, space);
         }
-        else if(downButton.isPressed())
+        else if (downButton.isPressed())
         {
-            space.translation_y-=10;
-            space.maxy = space.maxy - 10*space.pixel;
-            space.miny = space.miny - 10*space.pixel;
+            space.translation_y -= 10;
+            space.maxy = space.maxy - 10 * space.pixel;
+            space.miny = space.miny - 10 * space.pixel;
             reEvaluateFunction(s, space);
         }
         else if (recentreButton.isPressed())
