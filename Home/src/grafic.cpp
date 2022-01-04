@@ -58,6 +58,14 @@ public:
             return true;
         return false;
     }
+    bool isHovered()
+    {
+        POINT pos;
+        GetCursorPos(&pos);
+        if (x1 <= pos.x && pos.x <= x2 && y1 <= pos.y && pos.y <= y2)
+            return true;
+        return false;
+    }
 };
 inline void drawButtons(const vector<button> &v)
 {
@@ -209,6 +217,16 @@ bool isValidFunction(string s)
             if (i < s.size() - 1 && ((s[i + 1] > '9' || s[i + 1] < '0') && !isOperator(s[i + 1]) || s[i + 1] == '('))
                 return false;
         }
+        else if (s[i] == 'p')
+        {
+            if (i > s.size() - 2 || s[i + 1] != 'i')
+                return false;
+        }
+        else if(s[i] == 'e' || s[i] == 'i')
+        {
+            if (i < s.size() - 1 && (!isOperator(s[i + 1]) || s[i + 1] == '('))
+                return false;
+        }
     }
     functionIsValidVar = true;
     bool correctParanthesis = paranthesisAreCorrect(s);
@@ -332,11 +350,10 @@ void mainMenu()
     cleardevice();
     setBackground();
     button Start(200, 100, 400, 200, translationForLanguages["Start"][currentLanguage], bar);
-    Start.draw();
     button Languages(200, 200, 400, 300, translationForLanguages["Languages"][currentLanguage], bar);
-    Languages.draw();
     button Exit(200, 300, 400, 400, translationForLanguages["Exit"][currentLanguage], bar);
-    Exit.draw();
+    vector<button> functionButtons = {Start, Languages, Exit};
+    drawButtons(functionButtons);
     while (true)
     {
         if (Start.isPressed())
@@ -688,6 +705,8 @@ double simpsonIntegration(const string &s, double a, double b)
             area += evaluate(s, x) * ((i & 1) ? 4 : 2);
     }
     area *= h / 3;
+    if (abs(area) < eps)
+        area = 0;
     return area;
 }
 
@@ -695,11 +714,12 @@ void evaluateAndDrawIntegral(const string &s, myspace space)
 {
     double area = simpsonIntegration(s, pixelvalue(space.centre.x - space.dim, space), pixelvalue(space.centre.x + space.dim, space));
 
-    int spaceBorderX =  space.centre.x + space.dim + 200;
+    int spaceBorderX = space.centre.x + space.dim + 200;
     int spaceBorderY = space.centre.y + space.dim - 500;
     string printIntegral = translationForLanguages["Integral"][currentLanguage] + to_string(area);
     settextstyle(3, HORIZ_DIR, 3);
     settextjustify(CENTER_TEXT, CENTER_TEXT);
+    bar(spaceBorderX - 100, spaceBorderY - 100, spaceBorderX + 200, spaceBorderY + 100);
     outtextxy(spaceBorderX, spaceBorderY, (char *)printIntegral.c_str());
 }
 void reEvaluateFunction(const string &s, myspace space)
