@@ -33,6 +33,7 @@ long double pixelvalue(int x, myspace space)
 int currentLanguage = 0; // 0 for Romanian, 1 for English, 2 for French
 unordered_map<string, vector<string>> translationForLanguages;
 typedef void (*functionD)(int, int, int, int);
+void setTextToStandard();
 class button
 {
 public:
@@ -229,7 +230,7 @@ bool isValidFunction(string s)
             if (i > s.size() - 2 || s[i + 1] != 'i')
                 return false;
         }
-        else if (s[i] == 'e' || (i > 0 && s[i-1] == 'p' && s[i] == 'i'))
+        else if (s[i] == 'e' || (i > 0 && s[i - 1] == 'p' && s[i] == 'i'))
         {
             if (i < s.size() - 1 && (!isOperator(s[i + 1]) || s[i + 1] == '('))
                 return false;
@@ -374,14 +375,20 @@ double simpsonIntegration(const string &s, double a, double b)
         area = 0;
     return area;
 }
-
+string toString(double x)
+{
+    ostringstream strs;
+    strs << x;
+    return strs.str();
+}
 void evaluateAndDrawIntegral(const string &s, myspace space)
 {
     double area = simpsonIntegration(s, pixelvalue(space.centre.x - space.dim, space), pixelvalue(space.centre.x + space.dim, space));
 
     int spaceBorderX = space.centre.x + space.dim + 200;
     int spaceBorderY = space.centre.y + space.dim - 500;
-    string printIntegral = translationForLanguages["Integral"][currentLanguage] + to_string(area);
+
+    string printIntegral = translationForLanguages["Integral"][currentLanguage] + toString(area);
     settextstyle(3, HORIZ_DIR, 3);
     settextjustify(CENTER_TEXT, CENTER_TEXT);
     setfillstyle(SOLID_FILL, BLACK);
@@ -749,6 +756,10 @@ void sweepline(const string &s)
 {
     POINT prevmouse, curmouse;
     GetCursorPos(&prevmouse);
+    int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
+    
+    outtextxy(150, screenHeigth / 2, "x = ");
+    outtextxy(150, screenHeigth / 2 + 50, "y = ");
     while (true)
     {
         GetCursorPos(&curmouse);
@@ -758,6 +769,7 @@ void sweepline(const string &s)
         {
             setfillstyle(SOLID_FILL, BLACK);
             bar(prevmouse.x - 7, space.centre.y - space.dim, prevmouse.x + 7, space.centre.y + space.dim);
+            bar(150 + 30, screenHeigth / 2 - 100, 350, screenHeigth / 2 + 150);
 
             reEvaluateFunction(s, space, prevmouse.x - 10, prevmouse.x + 10);
 
@@ -773,19 +785,38 @@ void sweepline(const string &s)
 
             long double pointvalue = evaluate(s, pixelvalue(prevmouse.x, space));
 
+            string valuesToShowX = toString(pixelvalue(prevmouse.x, space));
+            string valuesToShowY = toString(pointvalue);
             if (isnan(pointvalue) || isnan(pointvalue) || fabs(pointvalue) > inf || fabs(pointvalue) > inf || pointvalue < space.miny || pointvalue > space.maxy)
-                cout << pixelvalue(prevmouse.x, space) << ' ' << "NAN" << '\n';
+                valuesToShowY = "NaN";
             else
             {
-                cout << pixelvalue(prevmouse.x, space) << ' ' << pointvalue << '\n';
+                setcolor(GREEN);
                 int centre = normalizare(pointvalue);
                 for (int i = 1; i <= 5; i++)
                     circle(prevmouse.x, centre, i);
             }
+            setTextToStandard();
+            settextjustify(LEFT_TEXT, CENTER_TEXT);
+            outtextxy(150 + 30, screenHeigth / 2, (char *)valuesToShowX.c_str());
+            outtextxy(150 + 30, screenHeigth / 2 + 50, (char *)valuesToShowY.c_str());
         }
     }
 }
-
+void setTextToStandard()
+{
+    settextstyle(3, HORIZ_DIR, 3);
+    settextjustify(CENTER_TEXT, CENTER_TEXT);
+    setbkcolor(BLACK);
+    setcolor(WHITE);
+}
+void printFunctionOverGraphic(const string &s, myspace space)
+{
+    setTextToStandard();
+    int spaceBorderYUp = space.centre.y - space.dim - 20;
+    const string toPrint = "f(x) = " + s;
+    outtextxy(space.centre.x, spaceBorderYUp, (char *)toPrint.c_str());
+}
 void drawFunction(const string &s)
 {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
@@ -800,7 +831,7 @@ void drawFunction(const string &s)
     space.translation_x = 0;
     space.translation_y = 0;
     initwindow(screenWidth, screenHeigth, "", -3, -3);
-
+    printFunctionOverGraphic(s, space);
     int spaceBorderX = space.centre.x + space.dim + 20;
     int spaceBorderY = space.centre.y + space.dim - 100;
 
