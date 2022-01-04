@@ -125,6 +125,8 @@ public:
 void mainMenu();
 bool isValidCharacter(char c)
 {
+    if (isupper(c))
+        return false;
     if (isalnum(c) || c == ' ' || c == '*' || c == '/' || c == '+' || c == '-' || c == '^' || c == '(' || c == ')' || c == '<' || c == '>' || c == '=' || c == '#' || c == '.')
         return true;
     return false;
@@ -186,7 +188,9 @@ bool isValidFunction(string s)
 {
     string::iterator end_pos = remove(s.begin(), s.end(), ' ');
     s.erase(end_pos, s.end());
-
+    for (auto it : s)
+        if (!isValidCharacter(it))
+            return false;
     for (int i = 0; i < s.size(); i++)
     {
         if (s[i] == 's' && !(i > 1 && ((s[i - 1] == 'o' && s[i - 2] == 'c') || s[i - 1] == 'b' && s[i - 2] == 'a')))
@@ -697,7 +701,7 @@ long double evaluate(const string &s, long double x)
             st.push(number(s, i));
             poate_este_unar = 0;
         }
-        else
+        else if (isOperator(s[i]))
         {
             char op_cur = s[i];
 
@@ -711,6 +715,11 @@ long double evaluate(const string &s, long double x)
             }
             op.push(op_cur);
             poate_este_unar = 1;
+        }
+        else
+        {
+            functionIsValidVar = false;
+            return 0; // arbitrarty
         }
     }
 
@@ -757,9 +766,9 @@ void sweepline(const string &s)
     POINT prevmouse, curmouse;
     GetCursorPos(&prevmouse);
     int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
-    
-    outtextxy(150, screenHeigth / 2, "x = ");
-    outtextxy(150, screenHeigth / 2 + 50, "y = ");
+
+    outtextxy(150, screenHeigth / 2, (char *)"x = ");
+    outtextxy(150, screenHeigth / 2 + 50, (char *)"y = ");
     while (true)
     {
         GetCursorPos(&curmouse);
