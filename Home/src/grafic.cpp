@@ -730,11 +730,27 @@ long double evaluate(const string &s, long double x)
     }
     return st.top();
 }
-
+void printInterval()
+{
+    int screenHeigth = GetSystemMetrics(SM_CYSCREEN);
+    setfillstyle(SOLID_FILL, BLACK);
+    bar(150 + 30, screenHeigth / 2 - 350, 350, screenHeigth / 2 - 120);
+    double x1 = pixelvalue(space.centre.x - space.dim, space), x2 = pixelvalue(space.centre.x + space.dim, space);
+    double y1 = space.miny, y2 = space.maxy;
+    string x1S = toString(x1), x2S = toString(x2);
+    string y1S = toString(y1), y2S = toString(y2);
+    setTextToStandard();
+    settextjustify(LEFT_TEXT, CENTER_TEXT);
+    outtextxy(150 + 30, screenHeigth / 2 - 300, (char *)x1S.c_str());
+    outtextxy(150 + 30, screenHeigth / 2 - 250, (char *)x2S.c_str());
+    outtextxy(150 + 30, screenHeigth / 2 - 200, (char *)y1S.c_str());
+    outtextxy(150 + 30, screenHeigth / 2 - 150, (char *)y2S.c_str());
+}
 void reset_graph()
 {
     setfillstyle(SOLID_FILL, BLACK);
     bar(space.centre.x - space.dim - 10, space.centre.y - space.dim - 10, space.centre.x + space.dim + 10, space.centre.y + space.dim + 10);
+    printInterval();
 }
 
 void reEvaluateFunction(const string &s, myspace space, int intervala, int intervalb)
@@ -749,13 +765,13 @@ void reEvaluateFunction(const string &s, myspace space, int intervala, int inter
         long double stvalue = evaluate(s, pixelvalue(punct, space));
         long double drvalue = evaluate(s, pixelvalue(punct + 1, space));
 
-        if (isnan(stvalue) || isnan(drvalue) || fabs(stvalue) > inf || fabs(drvalue) > inf)
+        if (isnan(stvalue) || isnan(drvalue) || fabs(stvalue) >= inf || fabs(drvalue) >= inf)
             continue;
 
         int y1 = normalizare(stvalue);
         int y2 = normalizare(drvalue);
 
-        if (compareResults == crtCompareResults)
+        if (compareResults == crtCompareResults && fabs(y2 - y1) <= space.dim)
             line(punct, y1, punct + 1, y2);
     }
     draw_space(space);
@@ -841,6 +857,11 @@ void drawFunction(const string &s)
     space.translation_y = 0;
     initwindow(screenWidth, screenHeigth, "", -3, -3);
     printFunctionOverGraphic(s, space);
+    outtextxy(150, screenHeigth / 2 - 300, (char *)"x1 = ");
+    outtextxy(150, screenHeigth / 2 - 250, (char *)"x2 = ");
+    outtextxy(150, screenHeigth / 2 - 200, (char *)"y1 = ");
+    outtextxy(150, screenHeigth / 2 - 150, (char *)"y2 = ");
+    printInterval();
     int spaceBorderX = space.centre.x + space.dim + 20;
     int spaceBorderY = space.centre.y + space.dim - 100;
 
