@@ -8,6 +8,6 @@ Compile with:
 g++ -o gf grafic.cpp -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32
 ```
 
-![ZoomIn](ZoomIn.png)
-![ZoomOut](ZoomOut.png)
-![Main](Main.png)
+![ZoomIn](presentation_images/ZoomIn.png)
+![ZoomOut](presentation_images/ZoomOut.png)
+![Main](presentation_images/Main.png)
